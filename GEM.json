@@ -10,19 +10,18 @@
 //      "forcing":"UpperClearing"
 //    },
 
-    // "notification_script":"./finished.sh",
-    
+    //"notification_script":"./finished.sh",
     "station_search_radius":5000, // m
     "interpolant":"spline",
     "per_triangle_timeseries":"false",
     "ui":false,
     "debug_level":"debug",
 
-    "prj_name":"SnowCast",
+    "prj_name":"SnowCast"
 
     //"startdate":"20141001T080000",
-    "startdate":"20160817T200000",
-      "enddate":"20160818T180000"
+    //"startdate":"20160817T200000",
+    //  "enddate":"20160818T180000"
      // "enddate":"20141104T160000"
   },
   "modules": //important these are [ ]
