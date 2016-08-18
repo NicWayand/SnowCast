@@ -14,4 +14,6 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast
 
 ./CHM -f GEM.json #-c config.option.startdate:$start_date 
 
+# Convert output vtu files to tif files
+python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
 
