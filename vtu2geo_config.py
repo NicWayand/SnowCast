@@ -11,10 +11,10 @@ input_path = '/home/nwayand/snow_models/output_CHM/SnowCast/output/'
 EPSG=26911 # http://spatialreference.org/ref/epsg/
 
 # Output variables
-variables = ['swe','p_snow']  #set to None to dump all variables
+variables = ['t','swe','p_snow']  #set to None to dump all variables
 
 # Output parameters
-parameters = [] # paramters are one offs we want to extract from the vtu files
+parameters = ['Elevation'] # paramters are one offs we want to extract from the vtu files
 
 # Output pixel size that the mesh is interpolated to (?)
 pixel_size = 100 # (m)
