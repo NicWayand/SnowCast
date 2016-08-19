@@ -17,3 +17,9 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast
 # Convert output vtu files to tif files
 python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
 
+# Run ipython plotting scripts
+runipy Plot_SWE.ipynb Figure_CHM.ipynb
+
+# Push ipython notebook plots to github
+#http://askubuntu.com/questions/306176/hourly-git-push
+
