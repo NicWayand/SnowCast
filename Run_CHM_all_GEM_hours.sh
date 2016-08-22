@@ -5,12 +5,6 @@ MP_NUM_THREADS=4
 
 # Run info
 cd /home/nwayand/snow_models/output_CHM/SnowCast
-#start_date = "20160817T200000"
-#end_date   = ""
-
-# Move to main dir
-#cd $main_dir
-#echo pwd
 
 ./CHM -f GEM.json #-c config.option.startdate:$start_date 
 
@@ -18,7 +12,7 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast
 python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
 
 # Run ipython plotting scripts
-runipy Plot_SWE.ipynb Figure_CHM.ipynb
+runipy Plot_CHM_output.ipynb Figure_CHM.ipynb
 
 # Push ipython notebook plots to github
 #http://askubuntu.com/questions/306176/hourly-git-push
