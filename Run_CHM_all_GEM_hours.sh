@@ -22,4 +22,5 @@ runipy Plot_SWE.ipynb Figure_CHM.ipynb
 
 # Push ipython notebook plots to github
 #http://askubuntu.com/questions/306176/hourly-git-push
+./Git_commit_and_push_master.sh
 
