@@ -33,7 +33,7 @@
     "Longwave_from_obs",
     //"Burridge_iswr",
     "slope_iswr",
-     //"Liston_monthly_llra_ta",
+    // "Liston_monthly_llra_ta",
      "kunkel_rh",
      "Thornton_p",
      "Dist_tlapse",
@@ -44,11 +44,12 @@
     // "Sicart_ilwr",
     "Harder_precip_phase",
 //     "threshold_p_phase",
+    "Simple_Canopy",
 
     //snow processes
-    "snobal",
-   // "snowpack",
-   "Richard_albedo"
+    //"snobal",
+   "snowpack"//,
+   //"Richard_albedo"
 
   ],
 
@@ -58,7 +59,8 @@
   // will remove the dependency on B from A.
   "remove_depency":
   {
-    	"Richard_albedo":"snobal",
+    	"Simple_Canopy":"snowpack",
+	"Richard_albedo":"snobal",
 	"Richard_albedo":"snowpack"
   },
   "config":
@@ -77,15 +79,16 @@
   },
   "meshes":
   {
-    "mesh":"meshes/FM1.mesh"
+    "mesh":"meshes/FM1.mesh",
     //map internal variables/parameters to the .mesh file's parameter section.
-    //"parameters":
-    //{
-    //  "file":"meshes/MarFor_liston_curvature.mesh"
-    // }
-
+    "parameters":
+    {
+      "file":"meshes/FM1.param"
+    }
   },
-
+  "parameter_mapping": {
+    "landcover":"GlobCover.json"
+  }, 
  
   "output":
   {
