@@ -11,7 +11,7 @@ input_path = '/home/nwayand/snow_models/output_CHM/SnowCast/output/'
 EPSG=26911 # http://spatialreference.org/ref/epsg/
 
 # Output variables
-variables = ['t','swe','p_snow']  #set to None to dump all variables
+variables = ['t','swe','p_snow','snowdepthavg']  #set to None to dump all variables
 
 # Output parameters
 parameters = ['Elevation'] # paramters are one offs we want to extract from the vtu files
