@@ -44,12 +44,12 @@
     // "Sicart_ilwr",
     "Harder_precip_phase",
 //     "threshold_p_phase",
-    "Simple_Canopy",
 
     //snow processes
+    "Simple_Canopy",
     //"snobal",
-   "snowpack"//,
-   //"Richard_albedo"
+    "snowpack"//,
+    //"Richard_albedo"
 
   ],
 
@@ -59,9 +59,12 @@
   // will remove the dependency on B from A.
   "remove_depency":
   {
-    	"Simple_Canopy":"snowpack",
-	"Richard_albedo":"snobal",
-	"Richard_albedo":"snowpack"
+    // Running snobal
+    "Simple_Canopy":"snobal",
+    "Richard_albedo":"snobal",
+    // Running snowbak
+    "Simple_Canopy":"snowpack",
+    "Richard_albedo":"snowpack"  
   },
   "config":
   {
