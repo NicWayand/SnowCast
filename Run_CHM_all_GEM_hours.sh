@@ -12,7 +12,8 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast
 python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
 
 # Run ipython plotting scripts
-runipy Plot_CHM_output.ipynb Figure_CHM.ipynb
+runipy Plot_CHM_output.ipynb Spatial_plots.ipynb
+runipy Plot_timeseries_at_CRHO_stations.ipynb Timeseries_plots.ipynb 
 
 # Push ipython notebook plots to github
 #http://askubuntu.com/questions/306176/hourly-git-push
