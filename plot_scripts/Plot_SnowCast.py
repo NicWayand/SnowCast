@@ -76,7 +76,7 @@ os.chdir(fig_dir)
 # Plot setup
 def make_map(projection=ccrs.PlateCarree()):
     fig, ax = plt.subplots(subplot_kw=dict(projection=projection))
-    fig.set_size_inches(10, 10)
+    fig.set_size_inches(20, 20)
     #ax.coastlines(resolution='100m', zorder=1)
     gl = ax.gridlines(draw_labels=True)
     gl.xlabels_top = gl.ylabels_right = False
