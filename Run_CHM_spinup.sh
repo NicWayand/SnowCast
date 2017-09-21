@@ -7,7 +7,7 @@
 cd /home/nwayand/snow_models/output_CHM/SnowCast
 
 #./CHM -f GEM_west_fortress.json #-c config.option.startdate:$start_date 
-./CHM -f GEM_west_CRHO.json
+#./CHM -f GEM_west_CRHO.json
 
 # Run plotting scripts
 echo "Running Plotting scripts"
@@ -19,9 +19,21 @@ echo "Plotting complete"
 echo "Uploading to server"
 #cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures
 cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/figures
-./ftp_upload.sh 48_snowfall.png
-./ftp_upload.sh snowdepth_48h.png
-./ftp_upload.sh 48_snowdepth_change.png
+../../ftp_upload.sh density.png files
+../../ftp_upload.sh snowdepth_48h.png files
+../../ftp_upload.sh 48_snowdepth_change.png files
 echo "Upload complete"
+
+# Convert vtus to geotifs
+/home/nwayand/custom/anaconda2/bin/python main.py vtu2geo_config.py
+
+# Convert vtus to KMZ and uploa
+# Convert vtus to KMZ and upload
+cd /home/nwayand/snow_models/output_CHM/SnowCast/KML_files
+./batch_tif_2_KML_UPLOAD.sh /home/nwayand/snow_models/output_CHM/SnowCast/KML_files snowdepthavg
+
+echo DONE!!!
+
+i
 
 

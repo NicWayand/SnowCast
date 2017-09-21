@@ -16,7 +16,7 @@ import datetime
 
 # Plot settings
 import seaborn as sns
-sns.set_style('whitegrid')
+sns.set_style('ticks')
 sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 
 # Dir to vtu files
@@ -89,34 +89,43 @@ fig, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
 ax.set_title('Snow depth. '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST'))
-p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z*100,cmap='Blues',vmin=0, vmax=200)
+p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z*100,cmap='Blues',vmin=0, vmax=np.nanmax(z)*100*0.8) # Max at 80% of mean (helps show small depths) 
 b1 = fig.colorbar(p1)
 b1.ax.set_ylabel('Snow depth (cm)')
+gl = ax.gridlines(draw_labels=True)
+gl.xlabels_top = gl.ylabels_right = False
+gl.xformatter = LONGITUDE_FORMATTER
+gl.yformatter = LATITUDE_FORMATTER
 
-sns.set_palette("BuGn_r")
+#sns.set_palette("BuGn_r")
 fig.savefig('snowdepth_48h.png',bbox_inches='tight',dpi=300)
 
 # Input
-var_name = 'p_snow'
+var_name = 'swe'
 
 # Move to vtu dir
 os.chdir(vtu_dir)
 # Get list of files
 vtu_files = np.sort(glob.glob(prefix+'*.vtu'))
 # file to plot
-cfile = vtu_files[-48:]
+cfile = vtu_files[-1]
 
 # Get time
-time_stamp = vfunc.get_vtu_time(cfile,prefix)
+time_stamp = vfunc.get_vtu_time([cfile],prefix)
 
 # Adjust time zone
 time_stamp = pd.to_datetime(time_stamp) + datetime.timedelta(hours=local_time_offset)
 
 # Get data
-df_p_snow = vfunc.get_multi_mesh_var_dask(cfile,var_name,time_stamp)
+# Get mesh
+cmesh = vfunc.get_mesh(cfile)
+swe = vfunc.get_face_var(cmesh,var_name)
+#df_swe = vfunc.get_multi_mesh_var_dask(cfile,var_name,time_stamp)
 
-# Sum last 48 hours (mm to cm)
-snowfall = df_p_snow.sum(axis=1)/100
+# Get swe, calc bulk density (kg m^2)
+swe = swe/1000 # mm to m
+bulk_density = swe/z*1000 # fraction to kg m^2
+bulk_density[~np.isfinite(bulk_density)] = 0
 
 # Move to fig dir
 os.chdir(fig_dir)
@@ -125,12 +134,12 @@ os.chdir(fig_dir)
 fig2, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
-ax.set_title('Snow accumulation.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+' to '+pd.to_datetime(time_stamp[-1]).strftime('%Y-%m-%d %H:%M:%S MST'))
-p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=snowfall,cmap='Blues')
+ax.set_title('Snow Density.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST'))
+p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=bulk_density,cmap='Greens', vmin=50, vmax=450)
 b1 = fig2.colorbar(p1)
-b1.ax.set_ylabel('liquid water equivalent (cm)')
-sns.set_palette("BuGn_r")
-fig2.savefig('48_snowfall.png',bbox_inches='tight',dpi=300)
+b1.ax.set_ylabel('Bulk Density kg/m^3')
+#sns.set_palette("BuGn_r")
+fig2.savefig('density.png',bbox_inches='tight',dpi=300)
 
 ## 48 accumued snow depth
 # Input
@@ -141,7 +150,7 @@ os.chdir(vtu_dir)
 # Get list of files
 vtu_files = np.sort(glob.glob(prefix+'*.vtu'))
 # file to plot
-cfile = [vtu_files[-48],vtu_files[-1]]
+cfile = [vtu_files[-2],vtu_files[-1]]
 
 # Get time
 time_stamp = vfunc.get_vtu_time(cfile,prefix)
@@ -154,6 +163,7 @@ df_snowdepth = vfunc.get_multi_mesh_var_dask(cfile,var_name,time_stamp)
 
 # Take diff in 48 hrs m to cm
 del_snowdepth = df_snowdepth.diff(periods=1,axis=1).ix[:,1]*100
+abs_max = np.max([del_snowdepth.max(), -1*del_snowdepth.min()])
 
 # Move to fig dir
 os.chdir(fig_dir)
@@ -163,7 +173,7 @@ fig3, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
 ax.set_title('Snowpack change.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+' to '+pd.to_datetime(time_stamp[-1]).strftime('%Y-%m-%d %H:%M:%S MST'))
-p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=del_snowdepth,cmap='seismic_r',vmin=-50,vmax=50)
+p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=del_snowdepth,cmap='seismic_r',vmin=-1*abs_max,vmax=abs_max)
 b1 = fig3.colorbar(p1)
 b1.ax.set_ylabel('delta depth (cm)')
 #sns.set_palette("BuGn_r")

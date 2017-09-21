@@ -4,17 +4,19 @@
 base = 'SC'
 
 # Input path to where output vtu files are located
-input_path = '/home/nwayand/snow_models/output_CHM/SnowCast/forecast/meshes/'
+input_path = '/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/meshes/SC.pvd'
+output_path = '/home/nwayand/snow_models/output_CHM/SnowCast/KML_files/'
 
-# Output projection
-EPSG=26911 # http://spatialreference.org/ref/epsg/
 
 # Output variables
-variables = ['t','swe','p_snow','snowdepthavg']  #set to None to dump all variables
+variables = ['snowdepthavg']  #set to None to dump all variables
+var_resample_method    = {'snowdepthavg':'average'} # Methods to use when calculating clipped raster
 
 # Output parameters
 parameters = ['Elevation'] # paramters are one offs we want to extract from the vtu files
+param_resample_method    = {'Elevation':'average'} # Methods to use when calculating clipped raster
+
 
 # Output pixel size that the mesh is interpolated to (?)
-pixel_size = 5 # (m)
+pixel_size = 100 # (m)
 
