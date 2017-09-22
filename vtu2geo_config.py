@@ -6,7 +6,9 @@ base = 'SC'
 # Input path to where output vtu files are located
 input_path = '/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/meshes/SC.pvd'
 output_path = '/home/nwayand/snow_models/output_CHM/SnowCast/KML_files/'
+config_dir = '/home/nwayand/snow_models/output_CHM/SnowCast/vtu_config'
 
+user_define_extent = False
 
 # Output variables
 variables = ['snowdepthavg']  #set to None to dump all variables

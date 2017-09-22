@@ -2,6 +2,7 @@
 #MP_NUM_THREADS=4
 
 # Caller script to run CHM for all GEM hours
+N_threads=10 # number of threads to use for vtu2geo parallel
 
 # Run info
 cd /home/nwayand/snow_models/output_CHM/SnowCast
@@ -25,9 +26,10 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/figures
 echo "Upload complete"
 
 # Convert vtus to geotifs
-/home/nwayand/custom/anaconda2/bin/python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
+cd /home/nwayand/snow_models/output_CHM/SnowCast
+/home/nwayand/custom/anaconda2/bin/python /home/nwayand/snow_models/CHM/tools/vtu2geo/create_parallel_configs.py vtu2geo_config.py
+/home/nwayand/snow_models/CHM/tools/vtu2geo/run_vtu2geo_in_parallel.sh /home/nwayand/snow_models/output_CHM/SnowCast/vtu_config $N_threads
 
-# Convert vtus to KMZ and uploa
 # Convert vtus to KMZ and upload
 cd /home/nwayand/snow_models/output_CHM/SnowCast/KML_files
 ./batch_tif_2_KML_UPLOAD.sh /home/nwayand/snow_models/output_CHM/SnowCast/KML_files snowdepthavg
