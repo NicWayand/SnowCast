@@ -25,7 +25,7 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/figures
 echo "Upload complete"
 
 # Convert vtus to geotifs
-/home/nwayand/custom/anaconda2/bin/python main.py vtu2geo_config.py
+/home/nwayand/custom/anaconda2/bin/python /home/nwayand/snow_models/CHM/tools/vtu2geo/main.py vtu2geo_config.py
 
 # Convert vtus to KMZ and uploa
 # Convert vtus to KMZ and upload
@@ -33,7 +33,5 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/KML_files
 ./batch_tif_2_KML_UPLOAD.sh /home/nwayand/snow_models/output_CHM/SnowCast/KML_files snowdepthavg
 
 echo DONE!!!
-
-i
 
 
