@@ -1,0 +1,1 @@
+/home/nwayand/scripts/ftp_upload.sh

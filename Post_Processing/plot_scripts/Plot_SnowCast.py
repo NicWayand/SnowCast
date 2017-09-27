@@ -24,8 +24,8 @@ sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 #fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup_highres/figures')
 #vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/meshes')
 #fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures')
-vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/meshes')
-fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/figures')
+vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/meshes')
+fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures')
 prefix = 'SC'
 
 #vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/GEM_CRHO/test_2/meshes')
