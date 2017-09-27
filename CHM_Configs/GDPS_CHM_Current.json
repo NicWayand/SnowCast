@@ -1,0 +1,300 @@
+{
+
+   // Section for generic model options
+  "option":
+  {
+    // For point model to work, there must be an input and output station of the appropriate names. All other points will be ignored.
+//    "point_mode":
+//    {
+//      "output":"UpperClearing",
+//      "forcing":"UpperClearing"
+//    },
+
+    //"notification_script":"./finished.sh",
+   // "station_search_radius":0.1,//0.22, // decimal degrees
+    "station_N_nearest":1,
+    "interpolant":"nearest",
+    "per_triangle_timeseries":"false",
+    "ui":false,
+    "debug_level":"debug",
+
+    "prj_name":"SnowCast"
+
+    //"startdate":"20170901T000000"
+    //"startdate":"20160817T200000",
+    //  "enddate":"20160818T180000"
+    // "enddate":"20160909T000000"
+  },
+  "modules": //important these are [ ]
+  [
+    //met interp
+    "solar",
+     "Liston_wind",
+//    "Marsh_shading_iswr",
+    "iswr_from_obs",
+    "Longwave_from_obs",
+    //"Burridge_iswr",
+    "iswr",
+    "fast_shadow",
+    // "Liston_monthly_llra_ta",
+     "kunkel_rh",
+     "Thornton_p",
+     "Dist_tlapse",
+     "scale_wind_vert",
+//    "point_mode",
+
+    //met process
+    //"Walcek_cloud",
+    // "Sicart_ilwr",
+    "Harder_precip_phase",
+//     "threshold_p_phase",
+
+    //snow processes
+    "Simple_Canopy",
+    "snobal",
+    "sub_grid",
+    //"snow_slide",
+    //"snowpack"//,
+    "Richard_albedo"
+
+  ],
+
+  // In case of a cycle depencency, remove dependencies between two modules. 
+  // If module A depends on B (A->B), then to remove the depency specify it as
+  // "A":"B" 
+  // will remove the dependency on B from A.
+  "remove_depency":
+  {
+    // Running snobal
+    "Simple_Canopy":"snobal",
+    "Richard_albedo":"snobal",
+    // Running snowpack
+    "Simple_Canopy":"snowpack",
+    "Richard_albedo":"snowpack",
+    "scale_wind_vert":"snowpack",
+    "scale_wind_vert":"snobal",
+    // Running snow_slide 
+    "snow_slide":"snobal"
+  },
+
+  "config":
+  {
+    "snowpack":"snowpack.json",
+    "Richard_albedo":
+    {
+      "min_swe_refresh":10,
+      "init_albedo_snow":0.8
+    }
+    //"Liston_wind":
+    //{
+    //  "serialize":true,
+    //  "serialize_output":"meshes/MarFor_liston_curvature.mesh"
+    // }
+  },
+  "meshes":
+  {
+    "mesh":"meshes/chro_extent_lowRes.mesh",
+    //map internal variables/parameters to the .mesh file's parameter section.
+    "parameters":
+    {
+      "file":"meshes/chro_extent_lowRes.param"
+    }
+  },
+  "parameter_mapping": {
+    "landcover":"USGS_treeCover.json"
+  }, 
+ 
+  "output":
+  {
+    "output_dir":"GDPS_Current",
+    "Canmore":
+    {
+       "longitude": -115.31599,
+       "latitude": 51.051834,
+       "file": "Canmore_out.txt",
+       "type": "timeseries"
+     }, 
+    "05BB803": {
+        "elevation": 2230.0,
+        "file": "05BB803_out.txt",
+        "latitude": 51.08333333,
+        "longitude": -115.78333300000001,
+        "type": "timeseries"
+    },
+    "05BJ805": {
+        "elevation": 2120.0,
+        "file": "05BJ805_out.txt",
+        "latitude": 50.82222222,
+        "longitude": -114.98888899999999,
+        "type": "timeseries"
+    },
+    "05CA805": {
+        "elevation": 2040.0,
+        "file": "05CA805_out.txt",
+        "latitude": 51.54055556,
+        "longitude": -116.056389,
+        "type": "timeseries"
+    },
+    "2A32P": {
+        "elevation": 2122.0,
+        "file": "2A32P_out.txt",
+        "latitude": 51.69630278,
+        "longitude": -116.6294111,
+        "type": "timeseries"
+    },
+    "2C14P": {
+        "elevation": 2090.0,
+        "file": "2C14P_out.txt",
+        "latitude": 51.05753333,
+        "longitude": -116.1374778,
+        "type": "timeseries"
+    },
+    "BNS": {
+        "elevation": 2099.0,
+        "file": "BNS_out.txt",
+        "latitude": 50.82092,
+        "longitude": -115.21391000000001,
+        "type": "timeseries"
+    },
+    "BRP": {
+        "elevation": 2100.0,
+        "file": "BRP_out.txt",
+        "latitude": 50.82598,
+        "longitude": -115.1982,
+        "type": "timeseries"
+    },
+    "BWH": {
+        "elevation": 2330.0,
+        "file": "BWH_out.txt",
+        "latitude": 50.838229999999996,
+        "longitude": -115.21578000000001,
+        "type": "timeseries"
+    },
+    "CNT": {
+        "elevation": 2205.0,
+        "file": "CNT_out.txt",
+        "latitude": 50.8216,
+        "longitude": -115.2065,
+        "type": "timeseries"
+    },
+    "CRG": {
+        "elevation": 2260.0,
+        "file": "CRG_out.txt",
+        "latitude": 50.76061,
+        "longitude": -115.36715,
+        "type": "timeseries"
+    },
+    "CRN": {
+        "elevation": 2565.0,
+        "file": "CRN_out.txt",
+        "latitude": 50.830040000000004,
+        "longitude": -115.22851000000001,
+        "type": "timeseries"
+    },
+    "FLG": {
+        "elevation": 2237.0,
+        "file": "FLG_out.txt",
+        "latitude": 51.6856,
+        "longitude": -116.5449,
+        "type": "timeseries"
+    },
+    "FRG": {
+        "elevation": 2421.0,
+        "file": "FRG_out.txt",
+        "latitude": 51.63518,
+        "longitude": -116.49028,
+        "type": "timeseries"
+    },
+    "FRS": {
+        "elevation": 2211.0,
+        "file": "FRS_out.txt",
+        "latitude": 50.8215,
+        "longitude": -115.2063,
+        "type": "timeseries"
+    },
+    "FSR": {
+        "elevation": 2327.0,
+        "file": "FSR_out.txt",
+        "latitude": 50.836420000000004,
+        "longitude": -115.22048999999998,
+        "type": "timeseries"
+    },
+    "HLN": {
+        "elevation": 1490.0,
+        "file": "HLN_out.txt",
+        "latitude": 51.05563,
+        "longitude": -114.86941999999999,
+        "type": "timeseries"
+    },
+    "HMW": {
+        "elevation": 2535.0,
+        "file": "HMW_out.txt",
+        "latitude": 51.693027,
+        "longitude": -116.420957,
+        "type": "timeseries"
+    },
+    "LLF": {
+        "elevation": 2470.0,
+        "file": "LLF_out.txt",
+        "latitude": 50.95714,
+        "longitude": -115.19304,
+        "type": "timeseries"
+    },
+    "PWL": {
+        "elevation": 2325.0,
+        "file": "PWL_out.txt",
+        "latitude": 50.95773,
+        "longitude": -115.20438999999999,
+        "type": "timeseries"
+    },
+    "PYT": {
+        "elevation": 1956.0,
+        "file": "PYT_out.txt",
+        "latitude": 50.97123,
+        "longitude": -115.17222,
+        "type": "timeseries"
+    },
+    "SIB": {
+        "elevation": 1845.0,
+        "file": "SIB_out.txt",
+        "latitude": 50.956540000000004,
+        "longitude": -115.17535,
+        "type": "timeseries"
+    },
+    "UPC": {
+        "elevation": 1848.0,
+        "file": "UPC_out.txt",
+        "latitude": 50.95688,
+        "longitude": -115.176221,
+        "type": "timeseries"
+    },
+    "UPF": {
+        "elevation": 1492.0,
+        "file": "UPF_out.txt",
+        "latitude": 50.94656,
+        "longitude": -115.146401,
+        "type": "timeseries"
+    },
+    "VVW": {
+        "elevation": 1492.0,
+        "file": "VVW_out.txt",
+        "latitude": 50.944109999999995,
+        "longitude": -115.13893999999999,
+        "type": "timeseries"
+    },
+     "mesh":
+     {
+       "base_name":"SC",
+       //"variables":["swe","snowdepthavg","p_snow","p","t","iswr"],
+       "frequency":1
+     }
+  },
+  "global":
+  {
+    "UTC_offset":0
+  },
+  "forcing":
+  {
+   "file":"/media/data2/GEM/GDPS/CHM_archive_append/GEM_forcing.json"
+  }
+}

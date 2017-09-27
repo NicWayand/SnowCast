@@ -18,6 +18,11 @@ Configfile=Configs/Config_GDPS_append.py
 echo Downloading GEM
 /home/nwayand/custom/anaconda2/bin/python $ex_dir"Download/Download_GDPS_GRIB2.py"  $ex_dir$Configfile
 
+# Subset grib2 files (global) to Canada
+echo Subsetting GDPS grib2 files
+# TODO: Remove hard coded paths
+/home/nwayand/SnowCast/NWP_Forcing/Util/sub_set_grib2_files.sh /media/data2/GEM/GDPS/grib2_current
+
 # Format grib2 to netcdf
 echo Formating grib2 to netcdf
 /home/nwayand/custom/anaconda2/envs/pynio/bin/python $ex_dir"GRIB2_to_NETCDF/GRIB2_GDPS_to_Netcdf.py" $ex_dir$Configfile
@@ -28,7 +33,7 @@ echo Formating grib2 to netcdf
 ##/home/nwayand/custom/anaconda2/bin/python $ex_dir"Netcdf_to_CHM_forcing.py" $ex_dir$Configfile
 
 # Run CHM for available forcing period
-#$CHM_dir"Run_CHM_spinup.sh"
+$CHM_dir"Run_HRDPS_CHM_Historical.sh"
 
 duration=$(( SECONDS - start ))
 echo Took $duration seconds

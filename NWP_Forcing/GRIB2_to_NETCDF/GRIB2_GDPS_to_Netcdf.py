@@ -41,7 +41,10 @@ def SPHM_2_RELHM(SPHM,PRESS,TAIR):
 
     TDCEL = TAIR-TFREEZE
     VPSAT = SATVPFRZ * np.exp( (17.27*TDCEL) / (237.30 + TDCEL) )       #! Vapour Press      (Pa)
-    SPHM2RELHM = (SPHM * PRESS)/(VPSAT * (W_RATIO + SPHM*(1.-W_RATIO)))
+    SPHM2RELHM = (SPHM * PRESS)/(VPSAT * (W_RATIO + SPHM*(1.-W_RATIO))) * 100
+    # Bounds
+    SPHM2RELHM = SPHM2RELHM.where(SPHM2RELHM <= 100).fillna(100)
+    SPHM2RELHM = SPHM2RELHM.where(SPHM2RELHM >= 5).fillna(5)
 
     return SPHM2RELHM
 
@@ -223,6 +226,9 @@ ds['Qsi'] = xr.concat([ds.Qsi[0,:,:]*0-9999,Qsi_wm2],dim='datetime').transpose('
 Qli_wm2 = ds.Qli.diff(dim='datetime')/dt_s # j/m2 to j/(s*m2)
 # First value is unknown (downside of saving as accum...) so we set it to -9999
 ds['Qli'] = xr.concat([ds.Qli[0,:,:]*0-9999,Qli_wm2],dim='datetime').transpose('datetime','lat_0', 'lon_0')
+
+# Adjust lon to be centered at 0
+ds['lon_0'] = ds.lon_0 - 360
 
 # Move to netcdf dir
 if not os.path.isdir(netcdf_dir):
