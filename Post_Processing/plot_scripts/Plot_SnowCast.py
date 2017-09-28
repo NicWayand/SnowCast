@@ -1,3 +1,4 @@
+import sys
 import os
 import numpy as np
 import pandas as pd
@@ -17,15 +18,18 @@ import datetime
 # Plot settings
 import seaborn as sns
 sns.set_style('ticks')
-sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
+sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
+fig_res = 150
+
+if len(sys.argv) == 1:
+    sys.error('Missing arg of CHM run dir.')
+
+chm_run_dir = str(sys.argv[-1])
 
 # Dir to vtu files
-#vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup_highres/meshes')  
-#fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup_highres/figures')
-#vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/meshes')
-#fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures')
-vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/meshes')
-fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures')
+main_dir  = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/')
+vtu_dir   = os.path.join(main_dir,chm_run_dir,'meshes')
+fig_dir   = os.path.join(main_dir,chm_run_dir,'figures')
 prefix = 'SC'
 
 #vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/GEM_CRHO/test_2/meshes')
@@ -98,7 +102,7 @@ gl.xformatter = LONGITUDE_FORMATTER
 gl.yformatter = LATITUDE_FORMATTER
 
 #sns.set_palette("BuGn_r")
-fig.savefig('snowdepth_48h.png',bbox_inches='tight',dpi=300)
+fig.savefig('snowdepth_48h.png',bbox_inches='tight',dpi=fig_res)
 
 # Input
 var_name = 'swe'
@@ -139,7 +143,7 @@ p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=bu
 b1 = fig2.colorbar(p1)
 b1.ax.set_ylabel('Bulk Density kg/m^3')
 #sns.set_palette("BuGn_r")
-fig2.savefig('density.png',bbox_inches='tight',dpi=300)
+fig2.savefig('density.png',bbox_inches='tight',dpi=fig_res)
 
 ## 48 accumued snow depth
 # Input
@@ -177,7 +181,7 @@ p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=de
 b1 = fig3.colorbar(p1)
 b1.ax.set_ylabel('delta depth (cm)')
 #sns.set_palette("BuGn_r")
-fig3.savefig('48_snowdepth_change.png',bbox_inches='tight',dpi=300)
+fig3.savefig('48_snowdepth_change.png',bbox_inches='tight',dpi=fig_res)
 
 
 
