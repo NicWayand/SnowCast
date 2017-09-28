@@ -33,7 +33,7 @@ echo Formating grib2 to netcdf
 ##/home/nwayand/custom/anaconda2/bin/python $ex_dir"Netcdf_to_CHM_forcing.py" $ex_dir$Configfile
 
 # Run CHM for available forcing period
-$CHM_dir"Run_HRDPS_CHM_Historical.sh"
+$CHM_dir"Run_GDPS_CHM_Current.sh"
 
 duration=$(( SECONDS - start ))
 echo Took $duration seconds

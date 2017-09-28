@@ -9,7 +9,7 @@ start=$SECONDS
 # Where scripts are located
 ex_dir=/home/nwayand/SnowCast/NWP_Forcing/
 # CHM run dir
-CHM_dir=/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs
+CHM_dir=/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/
 # Config file to use
 #Configfile=Config_GEM_west_fortress.py
 Configfile=Configs/Config_GEM_West.py

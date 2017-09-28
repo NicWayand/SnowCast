@@ -22,8 +22,8 @@ import datetime
 
 # Dir to vtu files
 remote_files = os.path.normpath(r'/media/data2/nicway/Remote/GEE_Snowcover_assimilation')
-vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/meshes')
-fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/forecast_CRHO_spinup/figures')
+vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/meshes')
+fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures')
 prefix = 'SC'
 
 local_time_offset = -7

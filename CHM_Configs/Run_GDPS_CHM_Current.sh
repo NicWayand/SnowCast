@@ -1,5 +1,5 @@
 #!/bin/bash
-#MP_NUM_THREADS=2
+OMP_NUM_THREADS=2
 
 # Caller script to run CHM for all GEM hours
 N_threads=10 # number of threads to use for vtu2geo parallel

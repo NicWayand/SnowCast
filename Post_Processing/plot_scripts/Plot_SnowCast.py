@@ -19,7 +19,7 @@ import datetime
 import seaborn as sns
 sns.set_style('ticks')
 sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
-fig_res = 150
+fig_res = 90
 
 if len(sys.argv) == 1:
     sys.error('Missing arg of CHM run dir.')
@@ -92,7 +92,7 @@ def make_map(projection=ccrs.PlateCarree()):
 fig, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
-ax.set_title('Snow depth. '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST'))
+ax.set_title('Snow depth.\n'+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+'\n')
 p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z*100,cmap='Blues',vmin=0, vmax=np.nanmax(z)*100*0.8) # Max at 80% of mean (helps show small depths) 
 b1 = fig.colorbar(p1)
 b1.ax.set_ylabel('Snow depth (cm)')
@@ -138,7 +138,7 @@ os.chdir(fig_dir)
 fig2, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
-ax.set_title('Snow Density.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST'))
+ax.set_title('Snow Density.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+'\n')
 p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=bulk_density,cmap='Greens', vmin=50, vmax=450)
 b1 = fig2.colorbar(p1)
 b1.ax.set_ylabel('Bulk Density kg/m^3')
@@ -176,7 +176,7 @@ os.chdir(fig_dir)
 fig3, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
-ax.set_title('Snowpack change.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+' to '+pd.to_datetime(time_stamp[-1]).strftime('%Y-%m-%d %H:%M:%S MST'))
+ax.set_title('Snowpack change.\n '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+'\nto '+pd.to_datetime(time_stamp[-1]).strftime('%Y-%m-%d %H:%M:%S'))
 p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=del_snowdepth,cmap='seismic_r',vmin=-1*abs_max,vmax=abs_max)
 b1 = fig3.colorbar(p1)
 b1.ax.set_ylabel('delta depth (cm)')
