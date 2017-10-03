@@ -18,7 +18,7 @@
     "ui":false,
     "debug_level":"debug",
 
-    "prj_name":"SnowCast",
+    "prj_name":"SnowCast"
 
     //"startdate":"20170901T000000"
     //"startdate":"20160817T200000",
@@ -286,7 +286,7 @@
      "mesh":
      {
        "base_name":"SC",
-       "variables":["swe","snowdepthavg","snowcoverfraction"],
+       "variables":["snowcoverfraction"],
        "frequency":24
      }
   },

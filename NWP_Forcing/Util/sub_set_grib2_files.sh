@@ -12,7 +12,7 @@ for f in *.grib2; do
     # Get file namebase
     filename="${f%.*}"
     # Subset
-    wgrib2 $f -small_grib -144.72657:-48.457035 40.794405:71.5921 $filename"_SUB.grib2"  
+    /home/nwayand/custom/wgrib2/wgrib2 $f -small_grib -144.72657:-48.457035 40.794405:71.5921 $filename"_SUB.grib2"  
     # Clean up
     rm $f 
 done

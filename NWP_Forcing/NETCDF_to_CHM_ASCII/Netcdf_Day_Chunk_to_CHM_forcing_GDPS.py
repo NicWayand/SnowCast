@@ -156,7 +156,7 @@ for cd in all_files:
                 if not flag1: # if we haven't checked yet (first station)
                     # Check last time steps line up
                     old_df = pd.read_csv('point_'+str(i)+'_'+str(j)+'.chm',sep="\t",parse_dates=True)
-                    wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=1)
+                    wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=GDPS_output_dt)
                     if not (wantTime==pd.to_datetime(df.index[0])):
                         print 'Missing time steps for file'
                         print 'Wanted ' + str(wantTime)

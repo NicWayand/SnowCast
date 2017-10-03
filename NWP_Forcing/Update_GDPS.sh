@@ -20,7 +20,6 @@ echo Downloading GEM
 
 # Subset grib2 files (global) to Canada
 echo Subsetting GDPS grib2 files
-# TODO: Remove hard coded paths
 /home/nwayand/SnowCast/NWP_Forcing/Util/sub_set_grib2_files.sh /media/data2/GEM/GDPS/grib2_current
 
 # Format grib2 to netcdf
@@ -28,7 +27,8 @@ echo Formating grib2 to netcdf
 /home/nwayand/custom/anaconda2/envs/pynio/bin/python $ex_dir"GRIB2_to_NETCDF/GRIB2_GDPS_to_Netcdf.py" $ex_dir$Configfile
 
 # Convert archived netcdf to CHM forcing
-#/home/nwayand/custom/anaconda2/bin/python  $ex_dir"Netcdf_to_CHM_forcing_Append_ascii.py" $ex_dir$Configfile
+echo NETCDF to CHM ASCII Forcing
+/home/nwayand/custom/anaconda2/bin/python  $ex_dir"NETCDF_to_CHM_ASCII/Netcdf_Day_Chunk_to_CHM_forcing_GDPS.py" $ex_dir$Configfile
 ##/home/nwayand/custom/anaconda2/bin/python  $ex_dir"Netcdf_Day_Chunk_to_CHM_forcing.py" $ex_dir$Configfile
 ##/home/nwayand/custom/anaconda2/bin/python $ex_dir"Netcdf_to_CHM_forcing.py" $ex_dir$Configfile
 
