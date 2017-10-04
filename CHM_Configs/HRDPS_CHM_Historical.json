@@ -286,7 +286,7 @@
      "mesh":
      {
        "base_name":"SC",
-       "variables":["snowcoverfraction"],
+       "variables":["swe","snowdepthavg","snowcoverfraction"],
        "frequency":24
      }
   },

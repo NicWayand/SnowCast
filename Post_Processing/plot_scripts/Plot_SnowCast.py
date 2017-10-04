@@ -153,8 +153,15 @@ var_name = 'snowdepthavg'
 os.chdir(vtu_dir)
 # Get list of files
 vtu_files = np.sort(glob.glob(prefix+'*.vtu'))
+# Then get times for ALL files
+time_stamp_all = vfunc.get_vtu_time(vtu_files,prefix)
+# last_time = time_stamp_all[-1]
+t_dt = (time_stamp_all[1]-time_stamp_all[0])
+time_dt_h = t_dt.days * 24 +  t_dt.seconds/3600
+day_before_index = -(1+ int(24/time_dt_h))
+
 # file to plot
-cfile = [vtu_files[-2],vtu_files[-1]]
+cfile = [vtu_files[day_before_index],vtu_files[-1]]
 
 # Get time
 time_stamp = vfunc.get_vtu_time(cfile,prefix)

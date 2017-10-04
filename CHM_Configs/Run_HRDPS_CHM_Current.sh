@@ -17,6 +17,7 @@ echo "Plotting complete"
 # Upload to server
 # TODO: build into python plotting scripts like this (http://stackoverflow.com/questions/12613797/python-script-uploading-files-via-ftp)
 echo "Uploading to server"
+/home/nwayand/SnowCast/Web_Upload/Static_Figure_upload.sh
 #cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures
 cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures
 /home/nwayand/SnowCast/Web_Upload/ftp_upload.sh density.png files

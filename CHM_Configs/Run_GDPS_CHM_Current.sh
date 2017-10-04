@@ -14,7 +14,8 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs
 /home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/plot_scripts/Plot_SnowCast.py GDPS_Current
 #echo "Plotting complete"
 
-# Upload to server
+echo Uploading to server
+/home/nwayand/SnowCast/Web_Upload/Static_Figure_upload.sh
 # TODO: build into python plotting scripts like this (http://stackoverflow.com/questions/12613797/python-script-uploading-files-via-ftp)
 #echo "Uploading to server"
 #cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures
