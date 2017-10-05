@@ -1,9 +1,11 @@
 import os
 import numpy as np
 import wget
+import urllib
 import sys
 import imp
 import time
+import send_mail
 
 # Load in config file
 #######  load user configurable paramters here    #######
@@ -52,6 +54,7 @@ ending     = '.grib2'
 us         = '_'
 
 # http://dd.weather.gc.ca/model_gem_global/25km/grib2/lat_lon/00/003/
+urls = []
 
 # For each forecast hour (Forc_H)
 for c_Forc_H in Forc_H:
@@ -71,5 +74,14 @@ for c_Forc_H in Forc_H:
         print(cfile)
         print(cpath+cfile)
         print(" ")
-        # download file
-        filename = wget.download(cpath+cfile)
+        try:
+            urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
+        except:
+            send_mail.send('GDPS download failed on file.') #+cpath+cfile))            
+        #urls.append(cpath+cfile)
+
+# download files
+#from multiprocessing.dummy import Pool # use threads for I/O bound tasks
+#result = Pool(4).map(urllib.urlretrieve, urls)
+#urllib.request.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
+#filename = wget.download(cpath+cfile)
