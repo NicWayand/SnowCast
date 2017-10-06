@@ -77,7 +77,7 @@ for c_Forc_H in Forc_H:
         try:
             urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
         except:
-            send_mail.send('GDPS download failed on file.') #+cpath+cfile))            
+            send_mail.send('GDPS download failed.') #+cpath+cfile))            
         #urls.append(cpath+cfile)
 
 # download files

@@ -14,12 +14,12 @@ import vtu_functions as vfunc
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import datetime
-
-# Plot settings
 import seaborn as sns
+
+# General plotting settings
 sns.set_style('ticks')
 sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
-fig_res = 90
+fig_res = 90 # dpi
 
 if len(sys.argv) == 1:
     sys.error('Missing arg of CHM run dir.')
@@ -32,50 +32,13 @@ vtu_dir   = os.path.join(main_dir,chm_run_dir,'meshes')
 fig_dir   = os.path.join(main_dir,chm_run_dir,'figures')
 prefix = 'SC'
 
-#vtu_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/GEM_CRHO/test_2/meshes')
-#fig_dir   = os.path.normpath(r'/home/nwayand/snow_models/output_CHM/GEM_CRHO/test_2/figures')
-#prefix    = 'GemK'
-
-local_time_offset = -7
+local_time_offset = -7 # Offset to local standard time (i.e. -7 for MST)
 
 # Make fig dir
 if not os.path.isdir(fig_dir):
     os.mkdir(fig_dir)
 
-# Input
-var_name = 'snowdepthavg'
-
-# Move to vtu dir
-os.chdir(vtu_dir)
-# Get list of files
-vtu_files = np.sort(glob.glob(prefix+'*.vtu'))
-# file to plot
-cfile = vtu_files[-1]
-# Get time
-time_stamp = vfunc.get_vtu_time([cfile],prefix)
-
-
-# Adjust time zone
-time_stamp = pd.to_datetime(time_stamp) + datetime.timedelta(hours=local_time_offset)
-
-#print time_stamp
-# Get mesh
-cmesh = vfunc.get_mesh(cfile)
-z = vfunc.get_face_var(cmesh,var_name)
-# Get tri info
-tri_info = vfunc.get_triangle(cmesh)
-
-# Move to fig dir
-os.chdir(fig_dir)
-
-# Plot
-#f1,ax1 = plt.subplots(ncols=1)
-#f1.set_size_inches(10, 10)
-#ax1.set_title('Snow depth. '+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H'))
-#p1 = plt.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z)
-#b1 = plt.colorbar(p1)
-## Save to file
-#f1.savefig('snowdepth_48h.png',bbox_inches='tight',dpi=300)
+# General plotting functions
 
 # Plot setup
 def make_map(projection=ccrs.PlateCarree()):
@@ -87,6 +50,87 @@ def make_map(projection=ccrs.PlateCarree()):
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
     return fig, ax
+
+def save_figure(f,file_out,fig_res):
+    f.savefig(file_out,bbox_inches='tight',dpi=fig_res)    
+
+def plot_variable(tri_var, var2plot, c_timestamp, fig_res, var_vmax):
+    # Make map
+    fig, ax = make_map()
+
+    # Get time stamp as string
+    str_timestamp = pd.to_datetime(c_timestamp).strftime('%Y-%m-%d %H:%M:%S MST')
+    file_timestamp = pd.to_datetime(c_timestamp).strftime('%Y_%m_%d_%H:%M:%S_MST.png')
+    
+    # Make tri plot
+    p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'], facecolors=tri_var * scale_factor[var2plot],cmap='Blues',vmin=np.nanmin(tri_var), vmax= var_vmax * scale_factor[var2plot])
+    
+    # Add title
+    ax.set_title(title_dict[var2plot]+'.\n'+str_timestamp+'\n')
+
+    # Add colorbar
+    b1 = fig.colorbar(p1)
+    b1.ax.set_ylabel(ylabel_dict[var2plot])
+    
+    # Add grid lines
+    gl = ax.gridlines(draw_labels=True)
+    gl.xlabels_top = gl.ylabels_right = False
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+
+    # Save figure
+    file_out = os.path.join(fig_dir, var2plot, var2plot+'_'+file_timestamp) 
+    save_figure(fig, file_out, fig_res)
+
+# Get General info about vtus
+
+# Move to vtu dir
+os.chdir(vtu_dir)
+# Get list of files
+vtu_files = np.sort(glob.glob(prefix+'*.vtu'))
+# Get time stamps
+time_stamps_all_UTC = vfunc.get_vtu_time(vtu_files, prefix)
+# Adjust time zone
+time_stamps_all_LST = time_stamps_all_UTC + pd.DateOffset(hours=local_time_offset)
+# Create series of time stamps and vtu files
+ps = pd.Series(vtu_files, index=time_stamps_all_LST)
+# Get mesh
+cmesh = vfunc.get_mesh(vtu_files[-1])
+# Get tri info
+tri_info = vfunc.get_triangle(cmesh)
+
+# Plotting dictionaries
+ylabel_dict = {'snowdepthavg':'Snowdepth (cm)','swe':'SWE (mm)'}
+scale_factor = {'snowdepthavg':100,'swe':1.0}
+title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE'}
+
+# Make single variable plots
+var_names_2_plot = ['snowdepthavg','swe']
+last_N = 10 # last output CHM vtu files to plot
+
+# Make dirs
+for var2plot in var_names_2_plot:
+    if not os.path.isdir(os.path.join(fig_dir,var2plot)):
+        os.mkdir(os.path.join(fig_dir,var2plot))
+
+for var2plot in var_names_2_plot:
+    # Get data for all time stamps
+    df_cvar = vfunc.get_multi_mesh_var_dask(ps.tail(last_N).values, var2plot, ps.tail(last_N).index)
+    df_cvar_max = df_cvar.max().max()*0.8 # Set max at 80%
+    for ct in df_cvar.index:
+        # Plot and Save
+        plot_variable(df_cvar.loc[ct].values, var2plot, ct, fig_res, df_cvar_max)
+        print('fig saved')
+
+# Copy last snowdepth and swe to orig files
+
+import sys
+sys.exit()
+
+z = vfunc.get_face_var(cmesh,var_name)
+
+# Move to fig dir
+os.chdir(fig_dir)
 
 # Plot on map
 fig, ax = make_map()

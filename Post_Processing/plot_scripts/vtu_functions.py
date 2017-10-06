@@ -116,9 +116,9 @@ def get_multi_mesh_var_dask(vtu_files,var_name,time_stamp):
     import time
     import pandas as pd
     # Grab first var to get length
-    temp_mesh = get_mesh(vtu_files[0])
-    temp_var  = get_face_var(temp_mesh,var_name)
-    temp_mesh = None
+    #temp_mesh = get_mesh(vtu_files[0])
+    #temp_var  = get_face_var(temp_mesh,var_name)
+    #temp_mesh = None
     # Initilize dic of variable arrays
     ar = {}
     # Loop through each vtu file
@@ -127,7 +127,7 @@ def get_multi_mesh_var_dask(vtu_files,var_name,time_stamp):
         cvar   = delayed(get_face_var)(c_mesh,var_name) # current variable
         ar[ct] = cvar
     #df.visualize() # not working, need to install dot.exe for windows path
-    df = delayed(pd.DataFrame.from_dict)(ar) # ,orient='index'
+    df = delayed(pd.DataFrame.from_dict)(ar,orient='index') # ,orient='index'
     start_time = time.time()
     df_out = df.compute()
     df = None

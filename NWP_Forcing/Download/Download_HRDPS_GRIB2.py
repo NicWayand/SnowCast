@@ -4,6 +4,8 @@ import wget
 import sys
 import imp
 import time
+import urllib
+import send_mail
 
 # Load in config file
 #######  load user configurable paramters here    #######
@@ -67,4 +69,8 @@ for c_Forc_H in Forc_H:
         cfile = office + us + system + us + domain + us + Variable[cVar] + us + projection + us + YYYYMMDDHH + us + Phhh + FH_s +  mm + ending
 
         # download file
-        filename = wget.download(cpath+cfile)
+        #filename = wget.download(cpath+cfile)
+        try:
+            urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
+        except:
+            send_mail.send('HRDPS download failed.')
