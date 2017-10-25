@@ -130,6 +130,8 @@ def get_multi_mesh_var_dask(vtu_files,var_name,time_stamp):
     df = delayed(pd.DataFrame.from_dict)(ar,orient='index') # ,orient='index'
     start_time = time.time()
     df_out = df.compute()
+    # Dask returns not sorted by date, so sort it
+    df_out.sort_index(inplace=True)
     df = None
     print("--- Took %s minutes ---" % ((time.time() - start_time)/60))
     return df_out

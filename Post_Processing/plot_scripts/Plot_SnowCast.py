@@ -1,9 +1,10 @@
 import sys
 import os
+import shutil 
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import glob
 import time
@@ -52,21 +53,30 @@ def make_map(projection=ccrs.PlateCarree()):
     return fig, ax
 
 def save_figure(f,file_out,fig_res):
-    f.savefig(file_out,bbox_inches='tight',dpi=fig_res)    
+    f.savefig(file_out,bbox_inches='tight',dpi=fig_res)
 
-def plot_variable(tri_var, var2plot, c_timestamp, fig_res, var_vmax):
+def plot_variable(tri_var, var2plot, time_start, c_timestamp, fig_res, var_vmin, var_vmax):
     # Make map
     fig, ax = make_map()
 
     # Get time stamp as string
     str_timestamp = pd.to_datetime(c_timestamp).strftime('%Y-%m-%d %H:%M:%S MST')
+    if time_start:
+        str_time_start = pd.to_datetime(time_start).strftime('%Y-%m-%d %H:%M:%S')
     file_timestamp = pd.to_datetime(c_timestamp).strftime('%Y_%m_%d_%H:%M:%S_MST.png')
     
     # Make tri plot
-    p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'], facecolors=tri_var * scale_factor[var2plot],cmap='Blues',vmin=np.nanmin(tri_var), vmax= var_vmax * scale_factor[var2plot])
+    p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],
+                      facecolors=tri_var * scale_factor[var2plot],
+                      cmap=cmap_dict[var2plot],
+                      vmin= var_vmin * scale_factor[var2plot],
+                      vmax= var_vmax * scale_factor[var2plot])
     
     # Add title
-    ax.set_title(title_dict[var2plot]+'.\n'+str_timestamp+'\n')
+    if time_start:
+        ax.set_title(title_dict[var2plot] + '.\n' + str_time_start + ' to\n'+str_timestamp + '\n')
+    else:
+        ax.set_title(title_dict[var2plot]+'.\n'+str_timestamp+'\n')
 
     # Add colorbar
     b1 = fig.colorbar(p1)
@@ -79,8 +89,12 @@ def plot_variable(tri_var, var2plot, c_timestamp, fig_res, var_vmax):
     gl.yformatter = LATITUDE_FORMATTER
 
     # Save figure
-    file_out = os.path.join(fig_dir, var2plot, var2plot+'_'+file_timestamp) 
+    if time_start:
+        file_out = os.path.join(fig_dir, var2plot + '.png')
+    else:
+        file_out = os.path.join(fig_dir, var2plot, var2plot+'_'+file_timestamp)
     save_figure(fig, file_out, fig_res)
+    return file_out
 
 # Get General info about vtus
 
@@ -99,35 +113,93 @@ cmesh = vfunc.get_mesh(vtu_files[-1])
 # Get tri info
 tri_info = vfunc.get_triangle(cmesh)
 
+# Correct CHM units (NOT STANDARD METRIC....)
+chm_units_fix = {'snowdepthavg':1, 'swe':1.0/1000} # to m
+
 # Plotting dictionaries
-ylabel_dict = {'snowdepthavg':'Snowdepth (cm)','swe':'SWE (mm)'}
-scale_factor = {'snowdepthavg':100,'swe':1.0}
-title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE'}
+ylabel_dict = {'snowdepthavg':'Snowdepth (cm)','swe':'SWE(mm)',
+               'snowdepthavg_diff': 'Snowdepth change (cm)', 'swe_diff': 'SWE change (mm)'}
+# From meteric (m) to display units
+scale_factor = {'snowdepthavg':100,'swe':1000,
+                'snowdepthavg_diff': 100, 'swe_diff': 1000,}
+title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE',
+              'snowdepthavg_diff': 'Snowdepth change', 'swe_diff': 'SWE change'}
+cmap_dict = {'snowdepthavg':mpl.colors.ListedColormap(sns.color_palette("Blues", 12)),
+             'swe':mpl.colors.ListedColormap(sns.color_palette("Reds", 12)),
+             'snowdepthavg_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12)),
+             'swe_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12))}
+var_min_delta = {'snowdepthavg':0.1,'swe':0.01} # Min max value for plotting change (m)
+
 
 # Make single variable plots
 var_names_2_plot = ['snowdepthavg','swe']
-last_N = 10 # last output CHM vtu files to plot
+last_N = 2 # last output CHM vtu files to plot
 
 # Make dirs
 for var2plot in var_names_2_plot:
     if not os.path.isdir(os.path.join(fig_dir,var2plot)):
         os.mkdir(os.path.join(fig_dir,var2plot))
 
+# Plot snapshots in time
 for var2plot in var_names_2_plot:
     # Get data for all time stamps
     df_cvar = vfunc.get_multi_mesh_var_dask(ps.tail(last_N).values, var2plot, ps.tail(last_N).index)
+    df_cvar = df_cvar * chm_units_fix[var2plot] # Units to Metric standard (m)
     df_cvar_max = df_cvar.max().max()*0.8 # Set max at 80%
+    df_cvar_min = 0
     for ct in df_cvar.index:
+        print('printing ',ct)
         # Plot and Save
-        plot_variable(df_cvar.loc[ct].values, var2plot, ct, fig_res, df_cvar_max)
+        file_out = plot_variable(df_cvar.loc[ct].values, var2plot, [], ct, fig_res, df_cvar_min, df_cvar_max)
         print('fig saved')
+        
+        # If last time
+        if ct==df_cvar.index[-1]:
+            print('Copied last vtu to '+var2plot+'_most_recent.png')
+            shutil.copyfile(file_out, os.path.join(fig_dir,var2plot+'_most_recent.png'))
 
-# Copy last snowdepth and swe to orig files
+
+# Plot change from NOW* to most future forecast
+# *NOW is defined as the CHM output time stamp most nearest to the time plot sripts run
+time_now = datetime.datetime.now() - datetime.timedelta(hours=1)# Chinook is on CST (-6) need to subtract 1 hour to got MST -7
+i = np.argmin(np.abs(ps.index.to_pydatetime() - time_now))
+time_now_near = ps.index[i]
+time_fut = ps.index[-1]
+
+for var2plot in var_names_2_plot:
+    # Get data for all time stamps
+    df_cvar = vfunc.get_multi_mesh_var_dask(ps.loc[[time_now_near, time_fut]].values,
+                                            var2plot, ps.loc[[time_now_near, time_fut]].index)
+    df_cvar = df_cvar * chm_units_fix[var2plot] # Units to Metric standard (m)
+    # Take difference
+    df_dif = df_cvar.diff(axis=0).iloc[1] # diff over time, returns missing on first row, so take second
+    df_trim = df_dif[np.abs(df_dif-df_dif.mean())<=(3*df_dif.std())] # Remove outliers (sometimes from avalnching)
+    df_cvar_max = np.max([np.abs(df_trim.min()), df_trim.max()]) # Use larger of neg or pos values
+    df_cvar_max = np.max([df_cvar_max, var_min_delta[var2plot]]) # Min max delta value
+    df_cvar_min = -1*df_cvar_max
+    print(df_cvar_min, df_cvar_max)
+    print('printing ',time_fut,' minus ',time_now_near)
+    # Plot and Save
+    file_out = plot_variable(df_dif.values, var2plot+'_diff', time_now_near, time_fut, fig_res, df_cvar_min, df_cvar_max)
+    print('fig saved')
 
 import sys
 sys.exit()
+### OLD FIGURE CODE BELOW
 
-z = vfunc.get_face_var(cmesh,var_name)
+cfile = vtu_files[-1]
+
+# Get time
+time_stamp = vfunc.get_vtu_time([cfile],prefix)
+
+# Adjust time zone
+time_stamp = pd.to_datetime(time_stamp) + datetime.timedelta(hours=local_time_offset)
+
+# Get data
+# Get mesh
+cmesh = vfunc.get_mesh(cfile)
+
+z = vfunc.get_face_var(cmesh,'snowdepthavg')
 
 # Move to fig dir
 os.chdir(fig_dir)
@@ -137,7 +209,7 @@ fig, ax = make_map()
 #kw = dict(marker='.', linestyle='-', alpha=0.25, color='darkgray', zorder=0)
 #lines = ax.triplot(tri_info['X'], tri_info['Y'], **kw)
 ax.set_title('Snow depth.\n'+pd.to_datetime(time_stamp[0]).strftime('%Y-%m-%d %H:%M:%S MST')+'\n')
-p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z*100,cmap='Blues',vmin=0, vmax=np.nanmax(z)*100*0.8) # Max at 80% of mean (helps show small depths) 
+p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],facecolors=z*100,cmap=cmap_dict[var2plot],vmin=0, vmax=np.nanmax(z)*100*0.8) # Max at 80% of mean (helps show small depths)
 b1 = fig.colorbar(p1)
 b1.ax.set_ylabel('Snow depth (cm)')
 gl = ax.gridlines(draw_labels=True)
