@@ -19,11 +19,11 @@ echo "Plotting complete"
 echo "Uploading to server"
 /home/nwayand/SnowCast/Web_Upload/Static_Figure_upload.sh
 #cd /home/nwayand/snow_models/output_CHM/SnowCast/forecast_spinup/figures
-cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures
-/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh density.png files
-/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh snowdepth_48h.png files
-/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh 48_snowdepth_change.png files
-echo "Upload complete"
+#cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures
+#/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh density.png files
+#/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh snowdepth_48h.png files
+#/home/nwayand/SnowCast/Web_Upload/ftp_upload.sh 48_snowdepth_change.png files
+#echo "Upload complete"
 
 # Convert vtus to geotifs
 #cd /home/nwayand/snow_models/output_CHM/SnowCast

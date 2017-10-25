@@ -8,5 +8,16 @@
     "canopyType":"0", // Forest
     "LAI": "3",
     "CanopyHeight": "10"
+  },
+  "2": {
+    "canopyType":"2", // Forest Gap
+    "LAI": "3",
+    "CanopyHeight": "10"
+  },
+  "3": {
+    "canopyType":"3", // Water body
+    "is_water":true,
+    "LAI": "3",
+    "CanopyHeight": "10"
   }
 }
