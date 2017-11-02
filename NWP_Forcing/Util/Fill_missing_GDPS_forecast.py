@@ -13,7 +13,7 @@ os.environ['TZ'] = 'GMT'
 time.tzset()
 
 # Dirs
-netcdf_dir = '/media/data2/GEM/GDPS/test_fill'
+netcdf_dir = '/media/data2/GEM/GDPS/netcdf_archive'
 os.chdir(netcdf_dir)
 
 # Takes one argument, the date of missing forecast netcdf file (UTC)
@@ -40,6 +40,7 @@ prv_f = prv_d.strftime(file_for)
 nxt_f = nxt_d.strftime(file_for)
 
 # Open previous day
+print("Opening previous file:",prv_f)
 prv_ds = xr.open_dataset(prv_f,engine='netcdf4')
 # Extract last 24 hours
 new_ds = prv_ds.isel(datetime=np.arange(8,48)) # arange doesn't include the last number!!

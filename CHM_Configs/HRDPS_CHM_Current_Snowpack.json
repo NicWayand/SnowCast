@@ -12,15 +12,15 @@
 
     //"notification_script":"./finished.sh",
    // "station_search_radius":0.1,//0.22, // decimal degrees
-    "station_N_nearest":4,
-    "interpolant":"spline",
+    "station_N_nearest":1,
+    "interpolant":"nearest",
     "per_triangle_timeseries":"false",
     "ui":false,
     "debug_level":"debug",
 
-    "prj_name":"SnowCast"
+    "prj_name":"SnowCast",
 
-    //"startdate":"20170901T000000"
+    "startdate":"20170901T000000"
     //"startdate":"20160817T200000",
     //  "enddate":"20160818T180000"
     // "enddate":"20160909T000000"
@@ -51,11 +51,10 @@
 
     //snow processes
     "Simple_Canopy",
-    "snobal",
-    "sub_grid",
+    //"snobal",
     "snow_slide",
-    //"snowpack"//,
-    "Richard_albedo"
+    "snowpack"
+    //"Richard_albedo"
 
   ],
 
@@ -105,13 +104,13 @@
  
   "output":
   {
-    "output_dir":"GDPS_Current",
+    "output_dir":"HRDPS_Current_Snowpack",
     "file":"SnowCast_stations.json", 
     "mesh":
      {
        "base_name":"SC",
-       //"variables":["swe","snowdepthavg","p_snow","p","t","iswr"],
-       "frequency":1
+       "variables":["swe","snowdepthavg","p_snow","p","t","iswr"],
+       "frequency":24
      }
   },
   "global":
@@ -120,6 +119,6 @@
   },
   "forcing":
   {
-   "file":"/media/data2/GEM/GDPS/CHM_archive_append/GEM_forcing.json"
+   "file":"/media/data2/GEM/west/CHM_archive/GEM_forcing.json"
   }
 }
