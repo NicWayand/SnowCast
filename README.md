@@ -6,8 +6,8 @@ SnowCast is developed as part of Global Water Futures and the Centre for Hydrolo
 
 Two GEM forecasts are currently used:
 
-GEM 2.5 km 2-day forecasts (High Resolution Deterministic Prediction System (HRDPS))
-GEM 25 km 6-day forecasts (Global Deterministic Forecast System (GDPS)
+* GEM 2.5 km 2-day forecasts (High Resolution Deterministic Prediction System (HRDPS))
+* GEM 25 km 6-day forecasts (Global Deterministic Forecast System (GDPS)
 
 <img src=http://www.snowcast.ca/static/HRDPS/swe_diff.png width="400" align="middle">
 Figure 1. Current 1-day forecast change in SWE. Centered over Banff, Alberta, Canada.
