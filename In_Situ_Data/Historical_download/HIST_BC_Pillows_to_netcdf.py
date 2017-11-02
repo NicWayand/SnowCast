@@ -1,36 +1,28 @@
-
-# coding: utf-8
-
-# In[1]:
-
-get_ipython().magic(u'matplotlib inline')
-#mpld3.enable_notebook()
 import numpy as np
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
-from datetime import datetime
 import xarray as xr
-from astropy.io import ascii
-import pytz
-# OS interaction
 import sys
 import os
-import glob
+import imp
 import wget
 import seaborn as sns
 sns.set_context("talk",font_scale=1.5)
 sns.set_style('whitegrid')
+# Load in config file
+#######  load user configurable paramters here    #######
+# Check user defined configuraiton file
+if len(sys.argv) == 1:
+    sys.error('Requires one argument [configuration file]')
 
+# Get name of configuration file/module
+configfile = sys.argv[-1]
 
-# # User config
+# Load in configuration file as module
+X = imp.load_source('',configfile)
 
-# In[2]:
-
-# Paths to user files
-data_dir = os.path.normpath(r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data') # Where to store data on local computer
-git_dir  = os.path.normpath(r'C:\Users\new356\Google Drive\Python\SnowCast\In_Situ_Data') # This repo
-
+# Assign to local variables
+data_dir = X.data_dir
+git_dir   = X.git_dir
 
 # # Create paths
 

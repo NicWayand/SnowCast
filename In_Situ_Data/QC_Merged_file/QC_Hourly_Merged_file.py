@@ -1,39 +1,29 @@
-
-# coding: utf-8
-
-# In[ ]:
-
-get_ipython().magic(u'matplotlib inline')
-
 import numpy as np
-import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
-from datetime import datetime
 import xarray as xr
-from astropy.io import ascii
-import pytz
-# OS interaction
 import sys
 import os
-import glob
+import imp
 import seaborn as sns
 sns.set_context("talk",font_scale=1.5)
 sns.set_style('whitegrid')
 
-
-# In[ ]:
-
 #TODO: Add constant check
 
+# Load in config file
+#######  load user configurable paramters here    #######
+# Check user defined configuraiton file
+if len(sys.argv) == 1:
+    sys.error('Requires one argument [configuration file]')
 
-# # User config
+# Get name of configuration file/module
+configfile = sys.argv[-1]
 
-# In[ ]:
+# Load in configuration file as module
+X = imp.load_source('',configfile)
 
-# Paths to user files
-data_dir = os.path.normpath(r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data') # Where to store data on local computer
-
+# Assign to local variables
+data_dir = X.data_dir
 
 # # Create paths
 

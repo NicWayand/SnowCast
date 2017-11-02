@@ -1,27 +1,28 @@
-
-# coding: utf-8
-
-# In[1]:
-
-get_ipython().magic(u'matplotlib inline')
-#mpld3.enable_notebook()
 import numpy as np
-import pandas as pd
-import matplotlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.io.shapereader as shpreader
 import xarray as xr
 import seaborn as sns
+import sys
+import imp
 
+# Load in config file
+#######  load user configurable paramters here    #######
+# Check user defined configuraiton file
+if len(sys.argv) == 1:
+    sys.error('Requires one argument [configuration file]')
 
-# In[ ]:
+# Get name of configuration file/module
+configfile = sys.argv[-1]
 
+# Load in configuration file as module
+X = imp.load_source('',configfile)
 
-
-
-# In[2]:
+# Assign to local variables
+data_dir = X.data_dir
+git_dir = X.git_dir
 
 # Load in merged hourly data
 netcdf_file = r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data\QC\Hourly_QC.nc'

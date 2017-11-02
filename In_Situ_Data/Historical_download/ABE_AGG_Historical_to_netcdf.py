@@ -1,46 +1,28 @@
-
-# coding: utf-8
-
-# In[ ]:
-
-get_ipython().magic(u'matplotlib inline')
-#mpld3.enable_notebook()
 import numpy as np
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
-from datetime import datetime
 import xarray as xr
-from astropy.io import ascii
-import pytz
-# OS interaction
-import sys
 import os
-import glob
-import wget
+import sys
+import imp
 import seaborn as sns
 sns.set_context("talk",font_scale=1.5)
 sns.set_style('whitegrid')
 
+# Load in config file
+#######  load user configurable paramters here    #######
+# Check user defined configuraiton file
+if len(sys.argv) == 1:
+    sys.error('Requires one argument [configuration file]')
 
-# # User config
+# Get name of configuration file/module
+configfile = sys.argv[-1]
 
-# In[ ]:
+# Load in configuration file as module
+X = imp.load_source('',configfile)
 
-
-
-
-# In[ ]:
-
-# Paths to user files
-data_dir = os.path.normpath(r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data') # Where to store data on local computer
-git_dir  = os.path.normpath(r'C:\Users\new356\Google Drive\Python\SnowCast\In_Situ_Data') # This repo
-
-
-# # Create paths
-# 
-
-# In[ ]:
+# Assign to local variables
+data_dir = X.data_dir
+git_dir   = X.git_dir
 
 # Data network
 network = 'ABE_AGG_HIST'
@@ -62,28 +44,7 @@ netcdf_file_out =  os.path.join(netcdf_dir,'ABE_AGG_HIST.nc')
 meta_file         = 'ABE_AGG_Station_Metadata.csv'
 meta_file_path    = os.path.join(git_dir,'metadata',meta_file)
 
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 os.chdir(download_dir)
-
-
-# In[ ]:
 
 sta_files = ['HourlyPrecipMatrix.csv',
             'HourlyRHMatrix.csv',
@@ -93,9 +54,6 @@ sta_files = ['HourlyPrecipMatrix.csv',
 
 Var_names = ['Precipitation','RealtiveHumidity','AirTemperature','WindDirection','WindSpeed']
 Var_units = ['mm','%','C','m/s','degrees'] # not windspeed comes in as km/h, converted below
-
-
-# In[ ]:
 
 # Import each data variable
 ds_dict   = {}
@@ -124,7 +82,7 @@ for (i,cf) in enumerate(sta_files):
     var_units = Var_units[i]
     # Set column names as station ID
     df_dat.columns = df_hdr.loc['Station Number'].values
-#     print(df_hdr.loc['Station Number'].values)
+
     # Set time
     df_dat.index.names = ['Time_MST'] # Kabir was unsure, check this time zone
     
@@ -139,13 +97,6 @@ df_hdr_raw = None
 df_dat = None
 
 
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 # Constains duplicate time values...  So need to manualy create datasets, then fix time, then merge
 da_fill_list = []
 for k in ds_dict.keys():
@@ -157,36 +108,12 @@ for k in ds_dict.keys():
     da_fill_list.append(ds_fill)
 ds_dict = None # Memory clean up
 
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 # Merge into netcdf
 ds = xr.merge(da_fill_list)
 da_fill_list = None # Memory clean up
 
-
-# In[ ]:
-
 # Convert units
 ds['WindSpeed'] = ds['WindSpeed'] * 1000/(60*60) # km/h to m/s
-
-
-# In[ ]:
 
 ## ADD UNITS
 # Add variable attributes (units), and fix variable names (remove spaces)
@@ -194,21 +121,10 @@ for cvar in ds.data_vars:
     # add units as attributes
     ds.get(cvar).attrs['unit'] = unit_dict[cvar]
 
-
-# In[ ]:
-
 # Grab metadata
 metadata = hrd_dict['AirTemperature'] # Might need to merge all
 metadata.columns = metadata.loc['Station Number'].values
 metadata = metadata.transpose()
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
 
 ## Add station metadata
 ds['station_name'] = xr.DataArray(metadata['Station Name'], coords={'staID':metadata.index}, dims='staID')
@@ -220,45 +136,15 @@ metadata_EL = pd.read_csv(meta_file_path,index_col='staID',delimiter=',',na_valu
 metadata_EL = metadata_EL.loc[ds.staID.values]
 ds['Elevation'] = xr.DataArray(metadata_EL['Elevation'],coords={'staID':metadata_EL.index}, dims='staID')
 
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 # Move to coords
 ds.set_coords(['station_name','Elevation','Lat','Lon'], inplace=True)
-ds
-
-
-# In[ ]:
 
 # Find stations missing Elevation data (or is zero (wrong))
 X = ds.Elevation.where(ds.Elevation.isnull(), drop=True)
 list(zip(X.station_name.values,X.staID.values))
 
-
-# In[ ]:
-
-# # Reindex to have continous time steps
-# Time_UTC_new = np.arange(ds.Time_UTC.values[0], ds.Time_UTC.values[-1], dtype='datetime64[h]')
-# ds_fill = ds.reindex({'Time_UTC':Time_UTC_new})
-
-
-# In[ ]:
-
 # Add Network(s)
 ds.coords['network'] = xr.DataArray([network for x in ds.staID], dims='staID')
-
-
-# In[ ]:
 
 # # Write out to netcdf by year
 # os.chdir(netcdf_dir)
@@ -266,14 +152,7 @@ ds.coords['network'] = xr.DataArray([network for x in ds.staID], dims='staID')
 # paths = ['%s.nc' % y for y in years]
 # xr.save_mfdataset(datasets, paths)
 
-
-# In[ ]:
-
 # Save as netcdf file
 ds.to_netcdf(netcdf_file_out)
-
-
-# In[ ]:
-
 
 

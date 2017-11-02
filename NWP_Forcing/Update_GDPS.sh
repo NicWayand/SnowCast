@@ -1,5 +1,5 @@
 #!/bin/bash
-# This is needed becase crontab does not have same env variables are user
+# This is needed because crontab does not have same env variables are user
 PATH=$PATH:/home/nwayand/custom/anaconda2:/home/nwayand/custom/anaconda2/bin:/home/nwayand/custom/anaconda2/bin
 
 # Timer
