@@ -27,8 +27,7 @@ AB_POR       = os.path.join(data_dir,'AB_POR','netcdf','AB_SWE_SD_NRT.nc')
 BC_CWY       = os.path.join(data_dir,'BC_NRT','netcdf','BC_NRT.nc') # Current Water Year (CWR)
 BC_HIST      = os.path.join(data_dir,'BC_HIST','netcdf','BC_HIST.nc')
 ABE_AGG_HIST = os.path.join(data_dir,'ABE_AGG_HIST','netcdf','ABE_AGG_HIST.nc') # MST
-CRHO         = r'C:\Users\new356\Google Drive\Nov2014 Data QC Completed Data\CRHO_Combined_Netcdf\CRHO_1hour.nc' # MST
-
+CRHO         = os.path.join(data_dir,'CRHO_HIST','netcdf','CRHO_1hour.nc') # MST
 
 # In[ ]:
 
@@ -317,7 +316,7 @@ ds_merged_2.set_coords(orig_coords, inplace=True);
 # In[ ]:
 
 # Save as netcdf file
-ds_merged_3.to_netcdf(netcdf_file_out)
+ds_merged_2.to_netcdf(netcdf_file_out)
 print(netcdf_file_out)
 
 

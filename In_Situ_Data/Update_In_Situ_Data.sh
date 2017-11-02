@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Stop of get any simple error
+set -e
+
 # This is needed because crontab does not have same env variables are user
 PATH=$PATH:/home/nwayand/custom/anaconda2:/home/nwayand/custom/anaconda2/bin:/home/nwayand/custom/anaconda2/bin
 
@@ -29,18 +33,21 @@ Configfile=In_Situ_Config.py
 # Updating Recent data
 # These execute in parallel
 echo Updating Recent data
-$python_bin $ex_dir$NRT_dir"NRT_AB_SWE_SD_to_netcdf.py"  $ex_dir$Configfile &
+$python_bin $ex_dir$NRT_dir"NRT_AB_SWE_SD_to_netcdf.py"  $ex_dir$Configfile & 
 $python_bin $ex_dir$NRT_dir"NRT_BC_Pillows_to_netcdf.py"  $ex_dir$Configfile &
-$python_bin $ex_dir$NRT_dir"NRT_recent_AB_Pillows_to_netcdf.py"  $ex_dir$Configfile &
+$python_bin $ex_dir$NRT_dir"NRT_recent_AB_Pillows_to_netcdf.py"  $ex_dir$Configfile & 
 
 # Importing Historical data (static)
 # These execute in parallel
 if [ "$updateHist" = true ] ; then
     echo Updating Historical data
-    $python_bin $ex_dir$HIST_dir"ABE_AGG_Historical_to_netcdf.py"  $ex_dir$Configfile &
+    $python_bin $ex_dir$HIST_dir"ABE_AGG_Historical_to_netcdf.py"  $ex_dir$Configfile & 
     $python_bin $ex_dir$HIST_dir"EC_SnowCourse_to_netcdf.py"  $ex_dir$Configfile &
     $python_bin $ex_dir$HIST_dir"HIST_BC_Pillows_to_netcdf.py"  $ex_dir$Configfile &
 fi
+
+# Wait until all above are done
+wait
 
 # Merging all data together
 # These execute in serial

@@ -46,8 +46,7 @@ netcdf_file_out =  os.path.join(netcdf_dir,'BC_HIST.nc')
 
 # Metadata for AB pillows 
 meta_file         = 'BC_Station_Metadata.csv'
-meta_file_path    = os.path.join(git_dir,'metadata',meta_file)
-
+meta_file_path    = os.path.join(git_dir,'In_Situ_Data','metadata',meta_file)
 
 # # Download Historical BC data (Updated at end of water year)
 

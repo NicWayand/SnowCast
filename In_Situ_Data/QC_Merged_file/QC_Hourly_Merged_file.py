@@ -63,16 +63,16 @@ ds.WindDirectionatA.median()
 # # for v in ds.data_vars:
 # #     plt.figure()
 # #     plt.plot(ds.Time_UTC, ds[v].values)
-plt.figure()
-plt.plot(ds.Time_UTC,ds.SnowWaterEquivelentA.values);
-plt.figure()
-plt.plot(ds.Time_UTC,ds.SnowDepthA.values);
-plt.figure()
-plt.plot(ds.Time_UTC,ds.AirtemperatureA.values);
-plt.figure()
-plt.plot(ds.Time_UTC,ds.CummulativePrecipitationA.values);
-plt.figure()
-plt.plot(ds.Time_UTC,ds.IncrementalPrecipitationA.values);
+#plt.figure()
+#plt.plot(ds.Time_UTC,ds.SnowWaterEquivelentA.values);
+#plt.figure()
+#plt.plot(ds.Time_UTC,ds.SnowDepthA.values);
+#plt.figure()
+#plt.plot(ds.Time_UTC,ds.AirtemperatureA.values);
+#plt.figure()
+#plt.plot(ds.Time_UTC,ds.CummulativePrecipitationA.values);
+#plt.figure()
+#plt.plot(ds.Time_UTC,ds.IncrementalPrecipitationA.values);
 
 
 # In[ ]:
@@ -173,52 +173,52 @@ DE = '2013-09'
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.SnowWaterEquivelentA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.SnowWaterEquivelentA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-ds.AirMoistureContentA.plot.hist(bins=1000);
+#ds.AirMoistureContentA.plot.hist(bins=1000);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.AirMoistureContentA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.AirMoistureContentA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-ds.ScalarWindSpeedA.plot.hist(bins=1000);
+#ds.ScalarWindSpeedA.plot.hist(bins=1000);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.ScalarWindSpeedA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.ScalarWindSpeedA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-ds.WindDirectionatA.plot.hist(bins=1000);
+#ds.WindDirectionatA.plot.hist(bins=1000);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.WindDirectionatA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.WindDirectionatA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-ds.SnowDepthA.plot.hist(bins=500);
+#ds.SnowDepthA.plot.hist(bins=500);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.SnowDepthA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.SnowDepthA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.AirtemperatureA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.AirtemperatureA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
@@ -228,23 +228,23 @@ plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.AirtemperatureA.sel(Time_UTC=
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.CummulativePrecipitationA.sel(Time_UTC=slice(DS,DE)).values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)),ds.CummulativePrecipitationA.sel(Time_UTC=slice(DS,DE)).values);
 
 
 # In[ ]:
 
-(ds.IncrementalPrecipitationA.where(ds.IncrementalPrecipitationA>0,drop=True)*1000).plot.hist(bins=100);
+#(ds.IncrementalPrecipitationA.where(ds.IncrementalPrecipitationA>0,drop=True)*1000).plot.hist(bins=100);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC, ds.IncrementalPrecipitationA.cumsum(dim='Time_UTC').values*1000);
+#plt.plot(ds.Time_UTC, ds.IncrementalPrecipitationA.cumsum(dim='Time_UTC').values*1000);
 # plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)), ds.IncrementalPrecipitationA.sel(Time_UTC=slice(DS,DE)).values*1000);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)), ds.IncrementalPrecipitationA.sel(Time_UTC=slice(DS,DE)).cumsum(dim='Time_UTC').values);
+#plt.plot(ds.Time_UTC.sel(Time_UTC=slice(DS,DE)), ds.IncrementalPrecipitationA.sel(Time_UTC=slice(DS,DE)).cumsum(dim='Time_UTC').values);
 
 
 # In[ ]:

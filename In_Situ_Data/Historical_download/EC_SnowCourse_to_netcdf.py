@@ -44,7 +44,7 @@ netcdf_file_out =  os.path.join(netcdf_dir,'EC_Snow_Courses.nc')
 
 # # Metadata for AB pillows 
 meta_file         = 'ABE_AGG_Station_Metadata.csv'
-meta_file_path    = os.path.join(git_dir,'metadata',meta_file)
+meta_file_path    = os.path.join(git_dir,'In_Situ_Data','metadata',meta_file)
 
 
 # In[ ]:

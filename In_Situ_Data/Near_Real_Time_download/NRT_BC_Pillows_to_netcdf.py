@@ -23,11 +23,6 @@ X = imp.load_source('',configfile)
 data_dir = X.data_dir
 git_dir   = X.git_dir
 
-# Paths to user files
-data_dir = os.path.normpath(r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data') # Where to store data on local computer
-git_dir  = os.path.normpath(r'C:\Users\new356\Google Drive\Python\CSAS') # This repo
-
-
 # # Create paths
 
 # In[ ]:
@@ -50,7 +45,7 @@ netcdf_file_out =  os.path.join(netcdf_dir,'BC_NRT.nc')
 
 # Metadata for AB pillows 
 meta_file         = 'BC_Station_Metadata.csv'
-meta_file_path    = os.path.join(git_dir,'metadata',meta_file)
+meta_file_path    = os.path.join(git_dir,'In_Situ_Data','metadata',meta_file)
 
 
 # # Download Near-real time BC data (Updated hourly)
