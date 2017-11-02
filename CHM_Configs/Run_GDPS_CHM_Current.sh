@@ -11,7 +11,7 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs
 
 # Run plotting scripts
 #echo "Running Plotting scripts"
-/home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/plot_scripts/Plot_SnowCast.py GDPS_Current
+/home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/plot_scripts/Plot_SnowCast.py ../Path_Config.py GDPS_Current
 #echo "Plotting complete"
 
 echo Uploading to server
