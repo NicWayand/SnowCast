@@ -13,7 +13,7 @@ import imp
 import pandas as pd
 import datetime
 
-EXP_names = ['HRDPS_Historical','forecast_CRHO_spinup','GDPS_Current','HRDPS_Current_Snowpack']
+#EXP_names = ['HRDPS_Historical','forecast_CRHO_spinup','GDPS_Current','HRDPS_Current_Snowpack']
 
 # Unit conversion done
 # Model p from mm to m
@@ -22,11 +22,14 @@ EXP_names = ['HRDPS_Historical','forecast_CRHO_spinup','GDPS_Current','HRDPS_Cur
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
-if len(sys.argv) == 1:
-    sys.error('Requires one argument [configuration file]')
+
+if len(sys.argv) != 3:
+    sys.error('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
-configfile = sys.argv[-1]
+configfile = sys.argv[1]
+chm_run_dir = sys.argv[2]
+print(chm_run_dir)
 
 # Load in configuration file as module
 X = imp.load_source('',configfile)
@@ -34,7 +37,7 @@ X = imp.load_source('',configfile)
 # Assign to local variables
 git_dir = X.git_dir
 
-for c_exp in EXP_names:
+for c_exp in [chm_run_dir]:
     print(c_exp)
      # 1km
 # #     main_dir   = os.path.normpath(r'C:\\Users\new356\Model_Output\CHM\Nov_2014')

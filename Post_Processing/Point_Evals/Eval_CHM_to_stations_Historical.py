@@ -38,6 +38,11 @@ if len(sys.argv) != 3:
 configfile = sys.argv[1]
 chm_run_dir = str(sys.argv[2])
 
+if chm_run_dir=='forecast_CRHO_spinup':
+    c_run_dt_in = 'H'
+elif chm_run_dir=='GDPS_Current':
+    c_run_dt_in = '3H'
+
 # Load in configuration file as module
 X = imp.load_source('',configfile)
 
@@ -46,7 +51,7 @@ data_dir = X.data_dir
 git_dir   = X.git_dir
 
 main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
-fig_dir   = os.path.join(main_dir , 'figures')
+fig_dir   = os.path.join(main_dir , 'figures', 'Point_Evals')
 
 # Make fig dir
 if not os.path.isdir(fig_dir):
@@ -95,8 +100,9 @@ EC_data = xr.open_dataset(EC_snow_course_in)
 
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
+print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1}
+dt_eval_hr = {'H':1, '3H':3}
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
@@ -177,7 +183,7 @@ def make_common(ds_obs, ds_mod, dt_eval):
     return (obs_dt_val, mod_dt_val)
 
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = make_common(OBS_data, Mod_data, 'H')
+(obs_dt_val, mod_dt_val) = make_common(OBS_data, Mod_data, c_run_dt_in)
 
 # Get common survey and model
 # (obs_Survey, mod_Survey) = make_common(EC_data, Mod_data, 'exact')
@@ -270,6 +276,7 @@ f.set_size_inches(16, 6)
 
 #### Loop through each station
 v_c = 0
+first_sta = True
 for cvar in Vars_to_plot:
     #     h_m = [] # init handles for plots
     #     h_o = []
@@ -287,10 +294,18 @@ for cvar in Vars_to_plot:
             c_mod_g=c_mod #[I_not_nans]
             c_obs_g=c_obs #[I_not_nans]
             
+            # labels
+            if first_sta:
+                obs_label = 'Observed'
+                mod_label = 'Model'
+                first_sta = False
+            else:
+                obs_label = '_nolegend_' 
+                mod_label = '_nolegend_'
             # Plot model/obs to get quick check
             if(cvar!='p'):
-                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
+                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
+                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
             else:
                 # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
                 if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
@@ -303,6 +318,7 @@ for cvar in Vars_to_plot:
     # incremetn axes                        
     v_c = v_c + 1
 f.tight_layout()
+plt.legend(loc='upper left')
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
 save_figure(f,file_out,fig_res)
 
@@ -316,6 +332,7 @@ f.set_size_inches(16, 6)
 
 #### Loop through each station
 v_c = 0
+first_sta = True
 for cvar in Vars_to_plot:
     #     h_m = [] # init handles for plots
     #     h_o = []
@@ -332,11 +349,20 @@ for cvar in Vars_to_plot:
             print(csta)
             c_mod_g=c_mod #[I_not_nans]
             c_obs_g=c_obs #[I_not_nans]
+
+             # labels
+            if first_sta:
+                obs_label = 'Observed'
+                mod_label = 'Model'
+                first_sta = False
+            else:
+                obs_label = '_nolegend_'
+                mod_label = '_nolegend_'
             
             # Plot model/obs to get quick check
             if(cvar!='p'):
-                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
+                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
+                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
             else:
                 # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
                 if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
@@ -349,6 +375,7 @@ for cvar in Vars_to_plot:
     # incremetn axes                        
     v_c = v_c + 1
 f.tight_layout()
+plt.legend(loc='upper left')
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
 save_figure(f,file_out,fig_res)
 

@@ -41,8 +41,8 @@ git_dir   = X.git_dir
 
 # Dir to vtu files
 main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
-vtu_dir   = os.path.join(main_dir,chm_run_dir,'meshes')
-fig_dir   = os.path.join(main_dir,chm_run_dir,'figures')
+vtu_dir   = os.path.join(main_dir, 'meshes')
+fig_dir   = os.path.join(main_dir, 'figures')
 prefix = 'SC'
 
 local_time_offset = -7 # Offset to local standard time (i.e. -7 for MST)
