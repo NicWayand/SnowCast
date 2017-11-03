@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Stop of get any simple error
+set -e
+
 # This is needed because crontab does not have same env variables are user
 PATH=$PATH:/home/nwayand/custom/anaconda2:/home/nwayand/custom/anaconda2/bin:/home/nwayand/custom/anaconda2/bin
 

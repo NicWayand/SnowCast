@@ -1,5 +1,8 @@
 #!/bin/bash
 OMP_NUM_THREADS=2
+# Stop of get any simple error
+set -e
+
 
 # Caller script to run CHM for all GEM hours
 N_threads=10 # number of threads to use for vtu2geo parallel
@@ -11,6 +14,10 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs
 
 # Process CHM point out
 /home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/Point_Evals/CHM_point_output_to_netcdf.py ../Path_Config.py GDPS_Current
+
+# Point plots
+/home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/Point_Evals/Eval_CHM_to_stations_Historical.py ../Path_Config.py GDPS_Current
+
 
 # Run plotting scripts
 #echo "Running Plotting scripts"

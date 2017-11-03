@@ -40,6 +40,8 @@ chm_run_dir = str(sys.argv[2])
 
 if chm_run_dir=='forecast_CRHO_spinup':
     c_run_dt_in = 'H'
+elif chm_run_dir=='HRDPS_Historical':
+    c_run_dt_in = 'MS'
 elif chm_run_dir=='GDPS_Current':
     c_run_dt_in = '3H'
 
@@ -102,7 +104,7 @@ EC_data = xr.open_dataset(EC_snow_course_in)
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3}
+dt_eval_hr = {'H':1, '3H':3, 'MS':999999}
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
@@ -227,6 +229,8 @@ for cvar in Vars_to_plot:
     #     h_m = [] # init handles for plots
     #     h_o = []
     #### Loop through each station
+
+
     
     for csta in sta_list:
         # Get mod and obs arrays
@@ -238,18 +242,16 @@ for cvar in Vars_to_plot:
         if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
             # print ('CHECK THIS is not shifting the time...')
             print(csta)
-            c_mod_g=c_mod #[I_not_nans]
-            c_obs_g=c_obs #[I_not_nans]
             
             # Plot model/obs to get quick check
             if(cvar!='p'):
-                c_mod_g.plot.line(color=sta_cmap[csta],ax=ax1,linestyle='--',linewidth=mod_linewidth,label='_nolegend_') #marker='.',
-                c_obs_g.plot.line(color=sta_cmap[csta],linewidth=obs_linewidth,ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
+                c_mod.plot.line(color=sta_cmap[csta],ax=ax1,linestyle='--',linewidth=mod_linewidth,label='_nolegend_') #marker='.',
+                c_obs.plot.line(color=sta_cmap[csta],linewidth=obs_linewidth,ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
             else:
-                # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
-                    np.cumsum(c_mod_g).plot.line(color=sta_cmap[csta],ax=ax1,linestyle='--',linewidth=mod_linewidth) #marker='.',
-                    np.cumsum(c_obs_g).plot.line(color=sta_cmap[csta],linewidth=obs_linewidth,ax=ax1)
+                # Check there is any precip measured (bug from above where missing all nanas, are averaged to zeros...)
+                if np.all(sum(c_mod)>0 and sum(c_obs)>0):
+                    np.cumsum(c_mod).plot.line(color=sta_cmap[csta],ax=ax1,linestyle='--',linewidth=mod_linewidth) #marker='.',
+                    np.cumsum(c_obs).plot.line(color=sta_cmap[csta],linewidth=obs_linewidth,ax=ax1)
             ax1.set_title(plot_key[cvar])
             ax1.set_ylabel('SWE ('+ylabel_unit[cvar]+')')
             
@@ -291,8 +293,6 @@ for cvar in Vars_to_plot:
         if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
             # print ('CHECK THIS is not shifting the time...')
             print(csta, " ", str(obs_dt_val.station_name.sel(station=csta).values))
-            c_mod_g=c_mod #[I_not_nans]
-            c_obs_g=c_obs #[I_not_nans]
             
             # labels
             if first_sta:
@@ -304,13 +304,13 @@ for cvar in Vars_to_plot:
                 mod_label = '_nolegend_'
             # Plot model/obs to get quick check
             if(cvar!='p'):
-                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
-                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
+                c_mod.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
+                c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
             else:
                 # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
-                    np.cumsum(c_mod_g).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                    np.cumsum(c_obs_g).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
+                if np.all(sum(c_mod)>0 and sum(c_obs)>0):
+                    np.cumsum(c_mod).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
+                    np.cumsum(c_obs).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
             ax1.set_title(plot_key[cvar])
             ax1.set_ylabel('Snow Depth ('+ylabel_unit[cvar]+')')
             
@@ -347,8 +347,6 @@ for cvar in Vars_to_plot:
         if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
             # print ('CHECK THIS is not shifting the time...')
             print(csta)
-            c_mod_g=c_mod #[I_not_nans]
-            c_obs_g=c_obs #[I_not_nans]
 
              # labels
             if first_sta:
@@ -361,15 +359,15 @@ for cvar in Vars_to_plot:
             
             # Plot model/obs to get quick check
             if(cvar!='p'):
-                c_mod_g.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
-                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
+                c_mod.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
+                c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
             else:
                 # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
-                    np.cumsum(c_mod_g).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                    np.cumsum(c_obs_g).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
+                if np.all(sum(c_mod)>0 and sum(c_obs_g)>0):
+                    np.cumsum(c_mod).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
+                    np.cumsum(c_obs).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
             ax1.set_title(plot_key[cvar])
-            ax1.set_ylabel('SWE ('+ylabel_unit[cvar]+')')
+            ax1.set_ylabel('Air Temp. ('+ylabel_unit[cvar]+')')
             
             
     # incremetn axes                        
