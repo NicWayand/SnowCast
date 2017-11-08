@@ -204,12 +204,12 @@ ds.set_coords(['station_name','Lat','Lon','Elevation'], inplace=True)
 
 # In[ ]:
 
-plt.plot(ds.Time_MST,ds.SWE.T.values);
+#plt.plot(ds.Time_MST,ds.SWE.T.values);
 
 
 # In[ ]:
 
-plt.plot(ds.Time_MST,ds.Snowdepth.T.values);
+#plt.plot(ds.Time_MST,ds.Snowdepth.T.values);
 
 
 # In[ ]:

@@ -29,7 +29,7 @@ MRG_dir=Merge_Network_scripts/
 QC_dir=QC_Merged_file/
 
 # Config file to use
-Configfile=In_Situ_Config.py
+Configfile=Path_Config.py
 
 # Updating Recent data
 # These execute in parallel

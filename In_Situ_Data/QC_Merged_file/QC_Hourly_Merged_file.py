@@ -50,12 +50,12 @@ ds = xr.open_dataset(hourly_merged) #, chunks={'Time_UTC':1, 'staID':10})
 
 # In[ ]:
 
-ds
+#ds
 
 
 # In[ ]:
 
-ds.WindDirectionatA.median()
+#ds.WindDirectionatA.median()
 
 
 # In[ ]:
@@ -85,7 +85,7 @@ ds.WindDirectionatA.median()
 # In[ ]:
 
 def QC_min_max(da, vmin, vmax):
-    return da.where((da < vmax) &  (da > vmin))
+    return da.where((da <= vmax) &  (da >= vmin))
 
 
 # In[ ]:
@@ -99,6 +99,7 @@ def QC_ROC(da, ROC_thress, ROC_window):
 def remove_outliers_via_filter(x,threshold,window):
     if ((sum(np.isnan(x.values))/len(x.values)>0.9) | np.isnan(threshold)): # Mostly nan, just return x, otherwise filter fails
         # Threshold of np.NaN indicates this method is not suitable for this type of variable (i.e. incremntal precipitation)
+        #print('Less than 10% data for ',str(x.staID),str(x.name))
         return x
     else: # Have some data, apply the median filter and remove differences greater than threshold
         # Apply median filter
@@ -126,14 +127,14 @@ for cvar in min_limits.keys():
 
 ## ROC - Use median filter to find values
 ROC_thress = {'AirMoistureContentA':60,
-              'SnowWaterEquivelentA':5/1000, 
-              'SnowDepthA':50/100, 
-              'CummulativePrecipitationA':20/1000, 
+              'SnowWaterEquivelentA':0.2, 
+              'SnowDepthA':0.5, 
+              #'CummulativePrecipitationA':20/1000, 
               'AirtemperatureA':10} # (unit/hr)
 ROC_window = {'AirMoistureContentA':6,
-              'SnowWaterEquivelentA':10, 
-              'SnowDepthA':10, 
-              'CummulativePrecipitationA':48, 
+              'SnowWaterEquivelentA':4, 
+              'SnowDepthA':4, 
+              #'CummulativePrecipitationA':48, 
               'AirtemperatureA':6} # dt (hrs)
 
 for cvar in ROC_thress.keys():
@@ -167,8 +168,8 @@ for cvar in ROC_thress.keys():
 
 # In[ ]:
 
-DS = '2012-10'
-DE = '2013-09'
+#DS = '2012-10'
+#DE = '2013-09'
 
 
 # In[ ]:

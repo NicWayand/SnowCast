@@ -83,18 +83,18 @@ ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'(C)','t':'C','rh':'%','p'
 # matplotlib.rc('font', **font)
 
 # Data files in
-file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
+#file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
 snow_survey_in  = os.path.join(data_dir, 'CRHO_HIST', 'netcdf', 'CRHO_Snow_Survey_Individual.nc')
 EC_snow_course_in = os.path.join(data_dir, 'EC_Snow_Courses', 'netcdf', 'EC_Snow_Courses.nc')
 
 # Load all obs
-OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
+#OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
 # Rename obs variable names to model variable names
-OBS_data.rename(vars_all, inplace=True);
+#OBS_data.rename(vars_all, inplace=True);
 
 # Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
-OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
-print('iswr fill is hack, need to fix upstream')
+#OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
+#print('iswr fill is hack, need to fix upstream')
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
@@ -103,7 +103,7 @@ EC_data = xr.open_dataset(EC_snow_course_in)
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
-Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
+Mod_data = xr.open_dataset(c_mod_file, engine='netcdf4')
 dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
@@ -137,7 +137,7 @@ def make_common(ds_obs, ds_mod, dt_eval):
     com_sta = np.sort(list(set(obs_sta).intersection(mod_sta)))
     print("Common stations are:",com_sta)
     print("")
-    if not len(com_sta):
+    if len(com_sta)==0:
         print(obs_sta)
         print(mod_sta)
         raise ValueError('No common stations found')
@@ -153,54 +153,33 @@ def make_common(ds_obs, ds_mod, dt_eval):
     ds_obs = ds_obs.where((ds_obs.time>=T_start) & (ds_obs.time<=T_end), drop=True)
     ds_mod = ds_mod.where((ds_mod.time>=T_start) & (ds_mod.time<=T_end), drop=True)
 
-    # Common time step
-    # OBS
-    obs_dt_in = (ds_obs.time.values[2]-ds_obs.time.values[1]).astype('timedelta64[h]').astype(float)
-    if ((obs_dt_in != dt_eval_hr[dt_eval]) & (dt_eval!='exact')): # Check if we need to agg (exact skips agg (i.e. snow surveys))
-        print('TODO: Current bug where if entire record is nans, it returns zeros...')
-        print('Resampling OBS')
-        obs_dt_val = ds_obs.resample(freq=dt_eval,dim='time',how='mean',label='left',skipna=True)
-        if 'p' in ds_obs.data_vars:
-            obs_dt_val['p'] = ds_obs['p'].resample(freq=dt_eval,dim='time',how='sum',label='left',skipna=True)
+    # Common time period
+    #agg time
+    com_time = np.intersect1d(ds_mod.time, ds_obs.time)
+    if len(com_time)==0:
+        sys.error("no common time found")
 
-    else:
-        obs_dt_val = ds_obs
+    print("Common time is:",com_time.size," from ",com_time[0], " to ", com_time[-1])
+    print("")
+    obs_dt_val = ds_obs.sel(time=com_time).load()
+    mod_dt_val = ds_mod.sel(time=com_time).load()
 
-    # Mod (advances by one hour if hourly in, hourly out... (why? orig label = left default??))
-    mod_dt_in = (ds_mod.time.values[2]-ds_mod.time.values[1]).astype('timedelta64[h]').astype(float)
-    if ((mod_dt_in != dt_eval_hr[dt_eval]) & (dt_eval!='exact')): # Check if we need to agg
-        print('Resampling Model')
-        mod_dt_val = ds_mod.resample(freq=dt_eval,dim='time',how='mean',label='left',skipna=True)
-        if 'p' in ds_mod.data_vars:
-            mod_dt_val['p'] = ds_mod['p'].resample(freq=dt_eval,dim='time',how='sum',label='left',skipna=True)
-
-    else:
-        mod_dt_val = ds_mod
-
-    ## Common time period
-    # agg time
-    #com_time = np.intersect1d(mod_dt_val.time,obs_dt_val.time)
-    #print("Common time is:",com_time[0], " to ", com_time[-1])
-    #print("")
-    #obs_dt_val = obs_dt_val.sel(time=com_time).load()
-    #mod_dt_val = mod_dt_val.sel(time=com_time).load()
-
-#     # Clean up
-#     ds_mod = None
-#     ds_obs = None
+    # Clean up
+    #ds_mod = None
+    #ds_obs = None
     
     return (obs_dt_val, mod_dt_val)
 
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = make_common(OBS_data, Mod_data, c_run_dt_in)
-
-# Get common survey and model
-# (obs_Survey, mod_Survey) = make_common(EC_data, Mod_data, 'exact')
+(obs_dt_val, mod_dt_val) = make_common(EC_data, Mod_data, 'point')
 
 # Memory Clean up
 OBS_data = None
 Mod_data = None
 
+#print(obs_dt_val)
+#print(mod_dt_val)
+#sys.exit()
 
 # ## Calculate Stats
 
@@ -251,15 +230,11 @@ for cvar in Vars_to_plot:
         print(csta)
         
         # Plot model/obs to get quick check
-        if(cvar!='p'):
-            hm, = c_mod.plot.line(color=c_sta_cmap[csta],ax=ax1,linestyle='--',
-                  linewidth=mod_linewidth,label=str(obs_dt_val.station_name.sel(station=csta).values))
-            ho, = c_obs.plot.line(color=c_sta_cmap[csta],
-                  linewidth=obs_linewidth,ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
-        else:
-            # Check there is any precip measured (bug from above where missing all nanas, are averaged to zeros...)
-            hm, = np.cumsum(c_mod).plot.line(color=c_sta_cmap[csta],ax=ax1,linestyle='--',linewidth=mod_linewidth)
-            ho, = np.cumsum(c_obs).plot.line(color=c_sta_cmap[csta],linewidth=obs_linewidth,ax=ax1)
+        hm, = c_mod.plot(color=c_sta_cmap[csta],ax=ax1,marker='o', linestyle='None',
+                  label=str(obs_dt_val.station_name.sel(station=csta).values))
+        ho, = c_obs.plot(color=c_sta_cmap[csta], marker='s', linestyle='None',
+                  ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
+        
         # Store legend handels
         print(hm)    
         h_mod.append(hm)
@@ -280,8 +255,10 @@ leg.legendHandles[0].set_color('black')
 leg.legendHandles[1].set_color('black')
 
 # Save Figure
-file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
+file_out = os.path.join(fig_dir, 'Survey' + Vars_to_plot[0] + '.png')
 save_figure(f,file_out,fig_res)
+
+sys.exit()
 
 
 #

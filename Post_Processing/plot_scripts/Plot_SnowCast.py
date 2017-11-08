@@ -157,7 +157,10 @@ for var2plot in var_names_2_plot:
     # Get data for all time stamps
     df_cvar = vfunc.get_multi_mesh_var_dask(ps.tail(last_N).values, var2plot, ps.tail(last_N).index)
     df_cvar = df_cvar * chm_units_fix[var2plot] # Units to Metric standard (m)
-    df_cvar_max = df_cvar.max().max()*0.8 # Set max at 80%
+    # Compute quanitil
+    df_cvar_max  = np.percentile(df_cvar.values[:], 90)
+    print(df_cvar_max)    
+    #df_cvar_max = df_cvar.max().max()*0.8 # Set max at 80%
     df_cvar_min = 0
     for ct in df_cvar.index:
         print('printing ',ct)

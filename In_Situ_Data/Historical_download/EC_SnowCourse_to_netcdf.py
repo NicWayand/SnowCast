@@ -160,15 +160,16 @@ ds_out
 
 # Save as netcdf file
 ds_out.to_netcdf(netcdf_file_out)
+print("saved")
 
 
 # In[ ]:
 
 # Quick Plot
-for cvar in ds_out.data_vars:
-    plt.figure()
-    for csta in ds_out.staID:
-        plt.scatter(ds_out.Time_UTC.values, ds_out[cvar].sel(staID=csta).values)
+#for cvar in ds_out.data_vars:
+#    plt.figure()
+#    for csta in ds_out.staID:
+#        plt.scatter(ds_out.Time_UTC.values, ds_out[cvar].sel(staID=csta).values)
 
 
 # In[ ]:
