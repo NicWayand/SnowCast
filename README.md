@@ -1,4 +1,5 @@
 # SnowCast
+[![Build Status](https://travis-ci.org/NicWayand/SnowCast.svg)](https://travis-ci.org/NicWayand/SnowCast) 
 
 SnowCast is an experimental data product that uses the Global Environmental Multiscale (GEM) model forecasts from Environment and Climate Change Canada (ECCC) to drive the Canadian Hydrological Model (CHM). Estimates of snowpack are provided over the a Bow River Basin, centered over Banff, Canada.
 
