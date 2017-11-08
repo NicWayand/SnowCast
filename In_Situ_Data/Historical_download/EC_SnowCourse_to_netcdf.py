@@ -1,14 +1,10 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime
 import xarray as xr
 import os
 import sys
 import imp
 import glob
-import seaborn as sns
-sns.set_context("talk",font_scale=1.5)
-sns.set_style('whitegrid')
 
 # Load in config file
 #######  load user configurable paramters here    #######

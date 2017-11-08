@@ -265,7 +265,7 @@ for staID in X.staID:
 plt.legend()
 
 
-# In[ ]:
+plt.show()
 
 
 

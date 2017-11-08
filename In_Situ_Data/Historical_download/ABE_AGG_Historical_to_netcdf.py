@@ -4,9 +4,6 @@ import xarray as xr
 import os
 import sys
 import imp
-import seaborn as sns
-sns.set_context("talk",font_scale=1.5)
-sns.set_style('whitegrid')
 
 # Load in config file
 #######  load user configurable paramters here    #######

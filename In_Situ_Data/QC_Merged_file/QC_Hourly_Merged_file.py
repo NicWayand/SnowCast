@@ -1,12 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import xarray as xr
 import sys
 import os
 import imp
-import seaborn as sns
-sns.set_context("talk",font_scale=1.5)
-sns.set_style('whitegrid')
 
 #TODO: Add constant check
 
@@ -25,14 +21,7 @@ X = imp.load_source('',configfile)
 # Assign to local variables
 data_dir = X.data_dir
 
-# # Create paths
-
-# In[ ]:
-
 hourly_merged = os.path.join(data_dir,'merged','Hourly_Merged.nc')
-
-
-# In[ ]:
 
 QC_dir = os.path.join(data_dir,'QC')
 # Make if does not exist
@@ -40,50 +29,10 @@ if not os.path.exists(QC_dir):
     os.makedirs(QC_dir)
 netcdf_file_out = os.path.join(QC_dir, 'Hourly_QC.nc')
 
-
-# # QC merged data
-
-# In[ ]:
-
+# QC merged data
 ds = xr.open_dataset(hourly_merged) #, chunks={'Time_UTC':1, 'staID':10})
 
-
-# In[ ]:
-
-#ds
-
-
-# In[ ]:
-
-#ds.WindDirectionatA.median()
-
-
-# In[ ]:
-
-# # for v in ds.data_vars:
-# #     plt.figure()
-# #     plt.plot(ds.Time_UTC, ds[v].values)
-#plt.figure()
-#plt.plot(ds.Time_UTC,ds.SnowWaterEquivelentA.values);
-#plt.figure()
-#plt.plot(ds.Time_UTC,ds.SnowDepthA.values);
-#plt.figure()
-#plt.plot(ds.Time_UTC,ds.AirtemperatureA.values);
-#plt.figure()
-#plt.plot(ds.Time_UTC,ds.CummulativePrecipitationA.values);
-#plt.figure()
-#plt.plot(ds.Time_UTC,ds.IncrementalPrecipitationA.values);
-
-
-# In[ ]:
-
-
-
-
-# # Quality control data here
-
-# In[ ]:
-
+# Quality control data here
 def QC_min_max(da, vmin, vmax):
     return da.where((da <= vmax) &  (da >= vmin))
 
@@ -92,9 +41,6 @@ def QC_min_max(da, vmin, vmax):
 
 def QC_ROC(da, ROC_thress, ROC_window):
     return da.groupby('staID').apply(lambda x: remove_outliers_via_filter(x,ROC_thress,ROC_window))
-
-
-# In[ ]:
 
 def remove_outliers_via_filter(x,threshold,window):
     if ((sum(np.isnan(x.values))/len(x.values)>0.9) | np.isnan(threshold)): # Mostly nan, just return x, otherwise filter fails
@@ -109,28 +55,23 @@ def remove_outliers_via_filter(x,threshold,window):
         # Find those data values that the diff was less than or equal to the user supplied threshold
         return x.where(difference <= threshold)
 
+# Quality Control (Hourly)
 
-# In[ ]:
-
-## Quality Control (Hourly)
-
-## Max and min 
+# Max and min
 min_limits = {'WindDirectionatA':0, 'ScalarWindSpeedA':0, 'AirMoistureContentA':5,'SnowWaterEquivelentA':0, 'SnowDepthA':0, 'CummulativePrecipitationA':0, 'IncrementalPrecipitationA':0, 'AirtemperatureA':-40}
 max_limits = {'WindDirectionatA':360, 'ScalarWindSpeedA':30, 'AirMoistureContentA':100,'SnowWaterEquivelentA':3, 'SnowDepthA':5.5, 'CummulativePrecipitationA':3, 'IncrementalPrecipitationA':60/1000, 'AirtemperatureA':50}
 
 for cvar in min_limits.keys():
     print('QC-min-max: '+str(cvar))
-    ds[cvar] = QC_min_max(ds[cvar], min_limits[cvar], max_limits[cvar]) 
+    ds[cvar] = QC_min_max(ds[cvar], min_limits[cvar], max_limits[cvar])
 
-
-# In[ ]:
-
-## ROC - Use median filter to find values
+# ROC - Use median filter to find values
 ROC_thress = {'AirMoistureContentA':60,
               'SnowWaterEquivelentA':0.2, 
               'SnowDepthA':0.5, 
               #'CummulativePrecipitationA':20/1000, 
               'AirtemperatureA':10} # (unit/hr)
+
 ROC_window = {'AirMoistureContentA':6,
               'SnowWaterEquivelentA':4, 
               'SnowDepthA':4, 
@@ -141,36 +82,18 @@ for cvar in ROC_thress.keys():
     print('QC-ROC: '+str(cvar))
     ds[cvar] = QC_ROC(ds[cvar], ROC_thress[cvar], ROC_window[cvar]) 
 
+# Aggregate to daily using mean of cummulated (to help remove noise)
 
-# In[ ]:
-
-# import mpld3
-# mpld3.enable_notebook()
-
-
-# In[ ]:
-
-# # Aggregate to daily using mean of cummulated (to help remove noise)
-
-# # Precip
+# Precip
 # Daily_cum_precip = ds['CummulativePrecipitationA'].resample(freq='D',dim='Time_UTC',how='median',label='left')
 # ds['Daily_QC_Cumulative_Precipitation'] = Daily_cum_precip.rename({'Time_UTC':'Daily_Time_UTC'})
 
-# # SWE
+# SWE
 # Daily_SWE = ds['QC_Snow_Water_Equivalent'].resample(freq='D',dim='Time_UTC',how='mean',label='left')
 # ds['Daily_QC_Snow_Water_Equivalent'] = Daily_SWE.rename({'Time_UTC':'Daily_Time_UTC'})
 
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 #DS = '2012-10'
 #DE = '2013-09'
-
 
 # In[ ]:
 
@@ -253,9 +176,5 @@ for cvar in ROC_thress.keys():
 # Save as netcdf file
 ds.to_netcdf(netcdf_file_out)
 print(netcdf_file_out)
-
-
-# In[ ]:
-
 
 
