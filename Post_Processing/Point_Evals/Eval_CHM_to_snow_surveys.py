@@ -1,17 +1,5 @@
-# Evaluate GEM-CHM Met and Snow over Historical Period
+# Evaluate CHM at Snow coarse sites
 
-# ## Point stations come from
-# ## 1) CRHO (many vars)
-# ## 2) BC Hydro (swe, SD, T, P)
-# ## 3) AB snow pillows (swe, SD)
-
-# ## Time Periods (UTC)
-#     ## CHM:   Nov 2014 to Aug 2017
-#     ## CRHO:      2002 to May 2016
-#     ## BC:        2016 to 2017 WY (Missing historical data)   
-#     ## AB:        1984 to Present
-# ## Common time period
-#     ## Nov 2014 to Aug 2017
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -53,9 +41,11 @@ data_dir = X.data_dir
 git_dir   = X.git_dir
 
 main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
-fig_dir   = os.path.join(main_dir , 'figures', 'Point_Evals')
+fig_dir   = os.path.join(main_dir, 'figures', 'Point_Evals')
 
 # Make fig dir
+if not os.path.isdir(os.path.join(main_dir, 'figures')):
+    os.mkdir(os.path.join(main_dir, 'figures'))
 if not os.path.isdir(fig_dir):
     os.mkdir(fig_dir)
 
@@ -98,7 +88,7 @@ EC_snow_course_in = os.path.join(data_dir, 'EC_Snow_Courses', 'netcdf', 'EC_Snow
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
-EC_data = xr.open_dataset(EC_snow_course_in)
+EC_data = xr.open_dataset(EC_snow_course_in).load()
 
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
@@ -220,6 +210,9 @@ for cvar in Vars_to_plot:
             'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
     c_sta_cmap = dict(zip(sta_w_data, sta_clrs))
 
+    c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
+    c_sta_Mmap = dict(zip(sta_w_data, c_sta_mrks))
+
     h_mod = []
     h_obs = []    
     #### Loop through each station
@@ -228,12 +221,20 @@ for cvar in Vars_to_plot:
         c_mod = mod_dt_val[cvar].sel(station=csta)
         c_obs = obs_dt_val[cvar].sel(station=csta)
         print(csta)
-        
+        print(c_sta_Mmap[csta])
         # Plot model/obs to get quick check
-        hm, = c_mod.plot(color=c_sta_cmap[csta],ax=ax1,marker='o', linestyle='None',
-                  label=str(obs_dt_val.station_name.sel(station=csta).values))
-        ho, = c_obs.plot(color=c_sta_cmap[csta], marker='s', linestyle='None',
-                  ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
+        hm = ax1.scatter(c_mod.time.values, c_mod.values, facecolors='r', edgecolors='r',
+                         s=100, marker=c_sta_Mmap[csta],
+                         label=str(obs_dt_val.station_name.sel(station=csta).values))
+
+        ho = ax1.scatter(c_obs.time.values, c_obs.values, facecolors='b', edgecolors='b',
+                         s=100, marker=c_sta_Mmap[csta],
+                         label=str(obs_dt_val.station_name.sel(station=csta).values))
+
+        # hm, = c_mod.plot(color=c_sta_cmap[csta],ax=ax1,marker='o', linestyle='None',
+        #           label=str(obs_dt_val.station_name.sel(station=csta).values))
+        # ho, = c_obs.plot(color=c_sta_cmap[csta], marker='s', linestyle='None',
+        #           ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
         
         # Store legend handels
         print(hm)    
@@ -251,8 +252,8 @@ first_legend = plt.legend(handles=h_obs, loc='upper left')
 ax = ax1.add_artist(first_legend)
 plt.legend([h_obs[0],h_mod[1]], ['Observed', 'Modeled'], loc='upper center')
 leg = ax1.get_legend()
-leg.legendHandles[0].set_color('black')
-leg.legendHandles[1].set_color('black')
+leg.legendHandles[0].set_color('blue')
+leg.legendHandles[1].set_color('red')
 
 # Save Figure
 file_out = os.path.join(fig_dir, 'Survey' + Vars_to_plot[0] + '.png')
