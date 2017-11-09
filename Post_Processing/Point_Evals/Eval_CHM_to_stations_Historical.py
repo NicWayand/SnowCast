@@ -1,17 +1,6 @@
-# Evaluate GEM-CHM Met and Snow over Historical Period
+# Evaluate GEM-CHM Met and Snow to stations
 
-# ## Point stations come from
-# ## 1) CRHO (many vars)
-# ## 2) BC Hydro (swe, SD, T, P)
-# ## 3) AB snow pillows (swe, SD)
-
-# ## Time Periods (UTC)
-#     ## CHM:   Nov 2014 to Aug 2017
-#     ## CRHO:      2002 to May 2016
-#     ## BC:        2016 to 2017 WY (Missing historical data)   
-#     ## AB:        1984 to Present
-# ## Common time period
-#     ## Nov 2014 to Aug 2017
+# Standard modules
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -22,10 +11,12 @@ import imp
 import os
 import seaborn as sns
 plt.rcParams.update({'figure.max_open_warning': 0})
+# SnowCast modules
+import CHM_functions as chmF
 
 # General plotting settings
-sns.set_style('ticks')
-sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
+sns.set_style('whitegrid')
+sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 fig_res = 90 # dpi
 
 # Load in config file
@@ -65,8 +56,7 @@ if not os.path.isdir(os.path.join(main_dir, 'figures')):
 if not os.path.isdir(fig_dir):
     os.mkdir(fig_dir)
 
-def save_figure(f,file_out,fig_res):
-    f.savefig(file_out,bbox_inches='tight',dpi=fig_res)
+
 
 # Make dictionary of obs:model variable names to compare
 # model:obs
@@ -108,116 +98,17 @@ EC_data = xr.open_dataset(EC_snow_course_in)
 
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
-print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
 dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
-# Find model cells that have forest on
-# print(Mod_data.where(Mod_data.snow_load.sum(dim='time')>0, drop=True).station)
-# print(Mod_data.where(Mod_data.snow_load.sum(dim='time')==0, drop=True).station.values)
-
-# Function that makes two data sets common:
-# Variables
-# Time Step
-# Stations
-def make_common(ds_obs, ds_mod, dt_eval):
-    # dt_eval = 'H' # MS (month start), H (hour), W (week)
-    
-    # Common variables
-    obs_vars = ds_obs.data_vars
-    mod_vars = ds_mod.data_vars
-    # Find common variables
-    com_vars = np.sort(list(set(obs_vars).intersection(mod_vars)))
-    # Extract only common vars
-    ds_obs=ds_obs[com_vars]
-    ds_mod=ds_mod[com_vars]
-    print("Common variables are:",com_vars)
-    print("")
-
-    # Common stations
-    obs_sta = ds_obs['station'].values
-    mod_sta = ds_mod['station'].values
-    # Find common variables
-    com_sta = np.sort(list(set(obs_sta).intersection(mod_sta)))
-    print("Common stations are:",com_sta)
-    print("")
-    if not len(com_sta):
-        print(obs_sta)
-        print(mod_sta)
-        raise ValueError('No common stations found')
-
-    # Extract only common stations
-    ds_obs=ds_obs.sel(station=com_sta)
-    ds_mod=ds_mod.sel(station=com_sta)
-
-    # Pre-trim time to common time (speeds up time step aggregation)
-    T_start = np.max([ds_mod.time.values[0], ds_obs.time.values[0]])
-    T_end = np.min([ds_mod.time.values[-1], ds_obs.time.values[-1]])
-    print(T_start, T_end)
-    ds_obs = ds_obs.where((ds_obs.time>=T_start) & (ds_obs.time<=T_end), drop=True)
-    ds_mod = ds_mod.where((ds_mod.time>=T_start) & (ds_mod.time<=T_end), drop=True)
-
-    # Common time step
-    # OBS
-    obs_dt_in = (ds_obs.time.values[2]-ds_obs.time.values[1]).astype('timedelta64[h]').astype(float)
-    if ((obs_dt_in != dt_eval_hr[dt_eval]) & (dt_eval!='exact')): # Check if we need to agg (exact skips agg (i.e. snow surveys))
-        print('TODO: Current bug where if entire record is nans, it returns zeros...')
-        print('Resampling OBS')
-        obs_dt_val = ds_obs.resample(freq=dt_eval,dim='time',how='mean',label='left',skipna=True)
-        if 'p' in ds_obs.data_vars:
-            obs_dt_val['p'] = ds_obs['p'].resample(freq=dt_eval,dim='time',how='sum',label='left',skipna=True)
-
-    else:
-        obs_dt_val = ds_obs
-
-    # Mod (advances by one hour if hourly in, hourly out... (why? orig label = left default??))
-    mod_dt_in = (ds_mod.time.values[2]-ds_mod.time.values[1]).astype('timedelta64[h]').astype(float)
-    if ((mod_dt_in != dt_eval_hr[dt_eval]) & (dt_eval!='exact')): # Check if we need to agg
-        print('Resampling Model')
-        mod_dt_val = ds_mod.resample(freq=dt_eval,dim='time',how='mean',label='left',skipna=True)
-        if 'p' in ds_mod.data_vars:
-            mod_dt_val['p'] = ds_mod['p'].resample(freq=dt_eval,dim='time',how='sum',label='left',skipna=True)
-
-    else:
-        mod_dt_val = ds_mod
-
-    ## Common time period
-    # agg time
-    #com_time = np.intersect1d(mod_dt_val.time,obs_dt_val.time)
-    #print("Common time is:",com_time[0], " to ", com_time[-1])
-    #print("")
-    #obs_dt_val = obs_dt_val.sel(time=com_time).load()
-    #mod_dt_val = mod_dt_val.sel(time=com_time).load()
-
-#     # Clean up
-#     ds_mod = None
-#     ds_obs = None
-    
-    return (obs_dt_val, mod_dt_val)
-
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = make_common(OBS_data, Mod_data, c_run_dt_in)
-
-# Get common survey and model
-# (obs_Survey, mod_Survey) = make_common(EC_data, Mod_data, 'exact')
+(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data, c_run_dt_in, dt_eval_hr)
 
 # Memory Clean up
 OBS_data = None
 Mod_data = None
-
-
-# ## Calculate Stats
-
-# def calc_stats(ds_obs, ds_mod):
-#     # RMSE
-#     rmse =
-
-# Plot settings
-import seaborn as sns
-sns.set_style('whitegrid')
-sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 
 sta_list = np.sort(mod_dt_val.station)
 
@@ -287,7 +178,7 @@ leg.legendHandles[1].set_color('black')
 
 # Save Figure
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+chmF.save_figure(f,file_out,fig_res)
 
 
 #
@@ -347,7 +238,7 @@ for cvar in Vars_to_plot:
 f.tight_layout()
 plt.legend(loc='upper left')
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+chmF.save_figure(f,file_out,fig_res)
 
 
 
@@ -390,7 +281,7 @@ for cvar in Vars_to_plot:
                 c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
             else:
                 # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod)>0 and sum(c_obs_g)>0):
+                if np.all(sum(c_mod)>0 and sum(c_obs)>0):
                     np.cumsum(c_mod).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
                     np.cumsum(c_obs).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
             ax1.set_title(plot_key[cvar])
@@ -402,6 +293,6 @@ for cvar in Vars_to_plot:
 f.tight_layout()
 plt.legend(loc='upper right')
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+chmF.save_figure(f,file_out,fig_res)
 
 # plt.show()

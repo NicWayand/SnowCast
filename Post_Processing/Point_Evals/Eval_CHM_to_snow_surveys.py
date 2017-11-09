@@ -82,7 +82,7 @@ EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdep
 # Variables
 # Time Step
 # Stations
-def make_common(ds_obs, ds_mod, dt_eval):
+def make_common_snow_coarse(ds_obs, ds_mod, dt_eval):
     # dt_eval = 'H' # MS (month start), H (hour), W (week)
     
     # Common variables
@@ -137,7 +137,7 @@ def make_common(ds_obs, ds_mod, dt_eval):
     return (obs_dt_val, mod_dt_val)
 
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = make_common(EC_data, Mod_data, 'point')
+(obs_dt_val, mod_dt_val) = make_common_snow_coarse(EC_data, Mod_data, 'point')
 
 # Memory Clean up
 OBS_data = None
