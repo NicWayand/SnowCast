@@ -1,9 +1,11 @@
 #!/bin/bash
 
-rsync -asv /home/nwayand/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures/* root@www.snowcast.ca:/var/www/html/static/HRDPS/
-rsync -asv /home/nwayand/SnowCast/CHM_Configs/GDPS_Current/figures/* root@www.snowcast.ca:/var/www/html/static/GDPS/
-rsync -asv /home/nwayand/SnowCast/CHM_Configs/HRDPS_Historical/figures/* root@www.snowcast.ca:/var/www/html/static/HRDPS_HIST/
+# Key/value array local dir name/remote dir name
+declare -A arr=(["forecast_CRHO_spinup"]="HRDPS" ["GDPS_Current"]="GDPS" ["HRDPS_Historical"]="HRDPS_HIST" ["HRDPS_Current_BS"]="HRDPS_with_blowing_snow")
 
-#sshpass -p PASSWORDHERE rsync /home/nwayand/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures/* root@www.snowcast.ca:/var/www/html/static/HRDPS/
-
+# Sync it
+for key in ${!arr[@]}; do
+    echo ""
+    rsync -asv /home/nwayand/SnowCast/CHM_Configs/${key}/figures/* root@www.snowcast.ca:/var/www/html/static/${arr[${key}]}/
+done
 

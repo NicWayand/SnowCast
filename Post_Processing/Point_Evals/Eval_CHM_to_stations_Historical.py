@@ -32,7 +32,7 @@ fig_res = 90 # dpi
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.error('Requires two arguments [configuration file] [chm_run_dir]')
+    sys.exit('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
@@ -40,10 +40,14 @@ chm_run_dir = str(sys.argv[2])
 
 if chm_run_dir=='forecast_CRHO_spinup':
     c_run_dt_in = 'H'
+elif chm_run_dir=='HRDPS_Current_BS':
+    c_run_dt_in = 'H'
 elif chm_run_dir=='HRDPS_Historical':
     c_run_dt_in = 'W'
 elif chm_run_dir=='GDPS_Current':
     c_run_dt_in = '3H'
+else:
+    sys.exit('Model run name not found')
 
 # Load in configuration file as module
 X = imp.load_source('',configfile)
@@ -56,6 +60,8 @@ main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
 fig_dir   = os.path.join(main_dir , 'figures', 'Point_Evals')
 
 # Make fig dir
+if not os.path.isdir(os.path.join(main_dir, 'figures')):
+    os.mkdir(os.path.join(main_dir, 'figures'))
 if not os.path.isdir(fig_dir):
     os.mkdir(fig_dir)
 
