@@ -9,12 +9,13 @@ import xarray as xr
 import sys
 import imp
 import os
+# Plot settings
 import seaborn as sns
-plt.rcParams.update({'figure.max_open_warning': 0})
+sns.set_style('whitegrid')
+# sns.set_style('ticks')
+sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 
 # General plotting settings
-sns.set_style('ticks')
-sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
 fig_res = 90 # dpi
 
 # Load in config file
@@ -27,22 +28,15 @@ if len(sys.argv) != 3:
 configfile = sys.argv[1]
 chm_run_dir = str(sys.argv[2])
 
-if chm_run_dir=='forecast_CRHO_spinup':
-    c_run_dt_in = 'H'
-elif chm_run_dir=='HRDPS_Historical':
-    c_run_dt_in = 'W'
-elif chm_run_dir=='GDPS_Current':
-    c_run_dt_in = '3H'
-
 # Load in configuration file as module
 X = imp.load_source('',configfile)
 
 # Assign to local variables
 data_dir = X.data_dir
-git_dir   = X.git_dir
+git_dir = X.git_dir
 
-main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
-fig_dir   = os.path.join(main_dir, 'figures', 'Point_Evals')
+main_dir = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
+fig_dir = os.path.join(main_dir, 'figures', 'Point_Evals')
 
 # Make fig dir
 if not os.path.isdir(os.path.join(main_dir, 'figures')):
@@ -67,25 +61,11 @@ plot_key = {'ilwr_out':'Outgoing Longwave','T_s_0':'Surface temperature','t':'Ai
 
 ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'(C)','t':'C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
             'U_2m_above_srf':'m/s','vw_dir':'degrees true north','swe':'m','snowdepthavg':'m'}
-#
-# # Set font size
-# font = {'weight' : 'bold',
-#         'size'   : 24}
-# matplotlib.rc('font', **font)
 
 # Data files in
 #file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
 snow_survey_in  = os.path.join(data_dir, 'CRHO_HIST', 'netcdf', 'CRHO_Snow_Survey_Individual.nc')
 EC_snow_course_in = os.path.join(data_dir, 'EC_Snow_Courses', 'netcdf', 'EC_Snow_Courses.nc')
-
-# Load all obs
-#OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
-# Rename obs variable names to model variable names
-#OBS_data.rename(vars_all, inplace=True);
-
-# Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
-#OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
-#print('iswr fill is hack, need to fix upstream')
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
@@ -93,15 +73,10 @@ EC_data = xr.open_dataset(EC_snow_course_in).load()
 
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
-print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file, engine='netcdf4')
 dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
-
-# Find model cells that have forest on
-# print(Mod_data.where(Mod_data.snow_load.sum(dim='time')>0, drop=True).station)
-# print(Mod_data.where(Mod_data.snow_load.sum(dim='time')==0, drop=True).station.values)
 
 # Function that makes two data sets common:
 # Variables
@@ -123,7 +98,7 @@ def make_common(ds_obs, ds_mod, dt_eval):
 
     # Common stations
     obs_sta = ds_obs['station'].values
-    mod_sta = ds_mod['station'].values
+    mod_sta = ds_mod['station'].values #[x.decode('UTF-8') for x in ds_mod['station'].values]
     # Find common variables
     com_sta = np.sort(list(set(obs_sta).intersection(mod_sta)))
     print("Common stations are:",com_sta)
@@ -168,217 +143,128 @@ def make_common(ds_obs, ds_mod, dt_eval):
 OBS_data = None
 Mod_data = None
 
-#print(obs_dt_val)
-#print(mod_dt_val)
-#sys.exit()
-
-# ## Calculate Stats
-
-# def calc_stats(ds_obs, ds_mod):
-#     # RMSE
-#     rmse =
-
-# Plot settings
-import seaborn as sns
-sns.set_style('whitegrid')
-sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
-
 sta_list = np.sort(mod_dt_val.station)
 
-## Time series plots
-#cmap = colors.ListedColormap(['white', 'red'])
-sta_clrs = ['b','g','r','c','m','y','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k', 'b','g','r',
-            'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
-sta_cmap = dict(zip(mod_dt_val.station.values, sta_clrs))
+# Function to plot mod/obs at snow coarse points
+def plot_var_at_snowCoarse(cvar, ds_MOD, ds_OBS):
 
-obs_linewidth = 2.5
-mod_linewidth = 2
-
-
-# How well can we Simulate point SWE?
-Vars_to_plot = ['swe']
-# Create a new figure and subplots for each variable
-(f, ax1) = plt.subplots(1, 1, sharey=False)
-f.set_size_inches(16, 6)
-#### Loop through each station
-v_c = 0
-for cvar in Vars_to_plot:
+    # Create a new figure and subplots for each variable
+    (f, ax1) = plt.subplots(1, 1, sharey=False)
+    f.set_size_inches(16, 6)
+    #### Loop through each station
     # Find stations with obs/mod data
-    sta_w_data = mod_dt_val.station.where((mod_dt_val[cvar].notnull().sum(dim='time')>0) & (obs_dt_val[cvar].notnull().sum(dim='time')>0), drop=True).values
-    print(sta_w_data)
+    sta_w_data = ds_MOD.station.where((ds_MOD[cvar].notnull().sum(dim='time')>0) & (ds_OBS[cvar].notnull().sum(dim='time')>0), drop=True).values
+    # print(sta_w_data)
 
-    c_sta_clrs = ['b','g','r','c','m','y','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k', 'b','g','r',
-            'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
-    c_sta_cmap = dict(zip(sta_w_data, sta_clrs))
-
-    #c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
-    #c_sta_mrks = markers.MarkerStyle.markers.keys()
-    c_sta_marks = ['1', '2', '3', '4', u'D', '8', u's', u'|', 11, u'P', 9, u'x', u'X', 5, u'_', u'^', u' ', u'd', u'h', u'+', u'*', u'o', u'.', u'p', u'H', u'v', u'', u'<', u'>']
-    print(c_sta_marks)
-    c_sta_Mmap = dict(zip(sta_w_data, c_sta_marks))
+    # c_sta_clrs = ['b','g','r','c','m','y','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k', 'b','g','r',
+    #         'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
+    # c_sta_cmap = dict(zip(sta_w_data, sta_clrs))
+    #
+    # #c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
+    # #c_sta_mrks = markers.MarkerStyle.markers.keys()
+    # c_sta_marks = ['1', '2', '3', '4', u'D', '8', u's', u'|', 11, u'P', 9, u'x', u'X', 5, u'_', u'^', u' ', u'd', u'h', u'+', u'*', u'o', u'.', u'p', u'H', u'v', u'', u'<', u'>']
+    # print(c_sta_marks)
+    # c_sta_Mmap = dict(zip(sta_w_data, c_sta_marks))
 
     h_mod = []
-    h_obs = []    
+    h_obs = []
     #### Loop through each station
     for csta in sta_w_data:
         # Get mod and obs arrays
-        c_mod = mod_dt_val[cvar].sel(station=csta)
-        c_obs = obs_dt_val[cvar].sel(station=csta)
-        print(csta)
-        print(c_sta_Mmap[csta])
+        c_mod = ds_MOD[cvar].sel(station=csta)
+        c_obs = ds_OBS[cvar].sel(station=csta)
+        # print(csta)
+        # print(c_sta_Mmap[csta])
         # Plot model/obs to get quick check
-        hm = ax1.scatter(c_mod.time.values, c_mod.values, facecolors='r', edgecolors='r',
-                         s=100, marker=c_sta_Mmap[csta],
-                         label=str(obs_dt_val.station_name.sel(station=csta).values))
+        hm = ax1.scatter(c_mod.time.values, c_mod.values, facecolors='None', edgecolors='r',
+                         s=100, marker='o', linewidths=1.5,
+                         label=str(ds_OBS.station_name.sel(station=csta).values))
+        # ax1.plot(c_mod.time.values, c_mod.values, 'r')
 
-        ho = ax1.scatter(c_obs.time.values, c_obs.values, facecolors='b', edgecolors='b',
-                         s=100, marker=c_sta_Mmap[csta],
-                         label=str(obs_dt_val.station_name.sel(station=csta).values))
+        ho = ax1.scatter(c_obs.time.values, c_obs.values, facecolors='None', edgecolors='b',
+                         s=100, marker='d',linewidths=2,
+                         label=str(ds_OBS.station_name.sel(station=csta).values))
+        # ax1.plot(c_obs.time.values, c_obs.values, 'b')
 
         # hm, = c_mod.plot(color=c_sta_cmap[csta],ax=ax1,marker='o', linestyle='None',
-        #           label=str(obs_dt_val.station_name.sel(station=csta).values))
+        #           label=str(ds_OBS.station_name.sel(station=csta).values))
         # ho, = c_obs.plot(color=c_sta_cmap[csta], marker='s', linestyle='None',
-        #           ax=ax1,label=str(obs_dt_val.station_name.sel(station=csta).values))
-        
+        #           ax=ax1,label=str(ds_OBS.station_name.sel(station=csta).values))
+
         # Store legend handels
-        print(hm)    
         h_mod.append(hm)
         h_obs.append(ho)
 
     ax1.set_title(plot_key[cvar])
-    ax1.set_ylabel('SWE ('+ylabel_unit[cvar]+')')
-            
-    # incremetn axes                        
-    v_c = v_c + 1
-f.tight_layout()
-# Add Legends
-first_legend = plt.legend(handles=h_obs, loc='upper left')
-ax = ax1.add_artist(first_legend)
-plt.legend([h_obs[0],h_mod[1]], ['Observed', 'Modeled'], loc='upper center')
-leg = ax1.get_legend()
-leg.legendHandles[0].set_color('blue')
-leg.legendHandles[1].set_color('red')
+    ax1.set_ylabel(plot_key[cvar]+' ('+ylabel_unit[cvar]+')')
 
-plt.show()
-# Save Figure
-file_out = os.path.join(fig_dir, 'Survey' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+    f.tight_layout()
+    # Add Legends
+    first_legend = plt.legend(handles=h_obs, loc='upper left')
+    # ax = ax1.add_artist(first_legend)
+    plt.legend([h_obs[0],h_mod[1]], ['Observed', 'Modeled'], loc='upper left')
+    leg = ax1.get_legend()
+    # leg.legendHandles[0].set_color('blue')
+    # leg.legendHandles[1].set_color('red')
 
-sys.exit()
+    # Save Figure
+    file_out = os.path.join(fig_dir, 'Survey_' + cvar + '.png')
+    save_figure(f,file_out,fig_res)
 
-
-#
-# for csta in mod_dt_val.station:
-#     plt.figure()
-#     plt.title(str(csta.values))
-#     plt.plot(mod_dt_val.time, mod_dt_val['swe'].sel(station=csta))
-
-Vars_to_plot = ['snowdepthavg']
-
-# Create a new figure and subplots for each variable
-(f, ax1) = plt.subplots(1, 1, sharey=False)
-f.set_size_inches(16, 6)
-# ax1 = ax1.flatten()
-
-#### Loop through each station
-v_c = 0
-first_sta = True
-for cvar in Vars_to_plot:
-    #     h_m = [] # init handles for plots
-    #     h_o = []
+    # How well can we Simulate point SWE?
+    # Create a new figure and subplots for each variable
+    (f2, ax1) = plt.subplots(1, 1, sharey=False)
+    f2.set_size_inches(16, 6)
     #### Loop through each station
-    for csta in sta_list:
-        # Get mod and obs arrays
-        c_mod = mod_dt_val[cvar].sel(station=csta)
-        c_obs = obs_dt_val[cvar].sel(station=csta)
-        # Find non-nan values
-        I_not_nans = ~c_mod.isnull() & ~c_obs.isnull()
-        # If any non-nan, take metrics
-        if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
-            # print ('CHECK THIS is not shifting the time...')
-            print(csta, " ", str(obs_dt_val.station_name.sel(station=csta).values))
-            
-            # labels
-            if first_sta:
-                obs_label = 'Observed'
-                mod_label = 'Model'
-                first_sta = False
-            else:
-                obs_label = '_nolegend_' 
-                mod_label = '_nolegend_'
-            # Plot model/obs to get quick check
-            if(cvar!='p'):
-                c_mod.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
-                c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
-            else:
-                # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod)>0 and sum(c_obs)>0):
-                    np.cumsum(c_mod).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                    np.cumsum(c_obs).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
-            ax1.set_title(plot_key[cvar])
-            ax1.set_ylabel('Snow Depth ('+ylabel_unit[cvar]+')')
-            
-            
-    # incremetn axes                        
-    v_c = v_c + 1
-f.tight_layout()
-plt.legend(loc='upper left')
-file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+    v_c = 0
+    # Find stations with obs/mod data
+    sta_w_data = ds_MOD.station.where(
+        (ds_MOD[cvar].notnull().sum(dim='time') > 0) & (ds_OBS[cvar].notnull().sum(dim='time') > 0),
+        drop=True).values
+    # print(sta_w_data)
 
+    # c_sta_clrs = ['b','g','r','c','m','y','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k', 'b','g','r',
+    #         'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
+    # c_sta_cmap = dict(zip(sta_w_data, sta_clrs))
+    #
+    # #c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
+    # #c_sta_mrks = markers.MarkerStyle.markers.keys()
+    # c_sta_marks = ['1', '2', '3', '4', u'D', '8', u's', u'|', 11, u'P', 9, u'x', u'X', 5, u'_', u'^', u' ', u'd', u'h', u'+', u'*', u'o', u'.', u'p', u'H', u'v', u'', u'<', u'>']
+    # print(c_sta_marks)
+    # c_sta_Mmap = dict(zip(sta_w_data, c_sta_marks))
 
-
-Vars_to_plot = ['t']
-# Create a new figure and subplots for each variable
-(f, ax1) = plt.subplots(1, 1, sharey=False)
-f.set_size_inches(16, 6)
-# ax1 = ax1.flatten()
-
-#### Loop through each station
-v_c = 0
-first_sta = True
-for cvar in Vars_to_plot:
-    #     h_m = [] # init handles for plots
-    #     h_o = []
+    h_mod = []
+    h_obs = []
     #### Loop through each station
-    for csta in sta_list:
+    for csta in sta_w_data:
         # Get mod and obs arrays
-        c_mod = mod_dt_val[cvar].sel(station=csta)
-        c_obs = obs_dt_val[cvar].sel(station=csta)
-        # Find non-nan values
-        I_not_nans = ~c_mod.isnull() & ~c_obs.isnull()
-        # If any non-nan, take metrics
-        if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
-            # print ('CHECK THIS is not shifting the time...')
-            print(csta)
+        c_mod = ds_MOD[cvar].sel(station=csta)
+        c_obs = ds_OBS[cvar].sel(station=csta)
+        # print(csta)
+        # print(c_sta_Mmap[csta])
+        # Plot model/obs to get quick check
+        hm = ax1.scatter(c_mod.time.values, c_mod.values - c_obs.values, facecolors='None', edgecolors='k',
+                         s=100, marker='o', linewidths=1.5,
+                         label=str(ds_OBS.station_name.sel(station=csta).values));
 
-             # labels
-            if first_sta:
-                obs_label = 'Observed'
-                mod_label = 'Model'
-                first_sta = False
-            else:
-                obs_label = '_nolegend_'
-                mod_label = '_nolegend_'
-            
-            # Plot model/obs to get quick check
-            if(cvar!='p'):
-                c_mod.plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth, label=mod_label)
-                c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1, label=obs_label)
-            else:
-                # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod)>0 and sum(c_obs_g)>0):
-                    np.cumsum(c_mod).plot.line(marker='.',color='r',ax=ax1,linestyle='--',linewidth=mod_linewidth)
-                    np.cumsum(c_obs).plot.line(color='b',linewidth=obs_linewidth,ax=ax1)
-            ax1.set_title(plot_key[cvar])
-            ax1.set_ylabel('Air Temp. ('+ylabel_unit[cvar]+')')
-            
-            
-    # incremetn axes                        
-    v_c = v_c + 1
-f.tight_layout()
-plt.legend(loc='upper right')
-file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')
-save_figure(f,file_out,fig_res)
+        # Store legend handels
+        # print(hm)
+        h_mod.append(hm)
+        # h_obs.append(ho)
 
-# plt.show()
+    ax1.set_title(plot_key[cvar])
+    ax1.set_ylabel(plot_key[cvar] + ' bias (' + ylabel_unit[cvar] + ')')
+
+    f2.tight_layout()
+    # Add Legend
+    plt.legend([h_mod[0]], ['Bias (Model - Observed)'], loc='upper left')
+
+    # Save Figure
+    file_out = os.path.join(fig_dir, 'Survey_' + cvar + '_diff.png')
+    save_figure(f2, file_out, fig_res)
+
+# Call plot and save functions
+plot_var_at_snowCoarse('swe', mod_dt_val, obs_dt_val)
+plot_var_at_snowCoarse('snowdepthavg', mod_dt_val, obs_dt_val)
+
+print("Finished plotting snow coarse comparison")
