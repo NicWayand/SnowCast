@@ -1,7 +1,8 @@
 # Evaluate CHM at Snow coarse sites
 
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
+from matplotlib import markers
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -210,8 +211,11 @@ for cvar in Vars_to_plot:
             'c','m','y','k', 'b','g','r','c','k', 'b','g','r','c','m','y','k', 'b','g','r','c','k']
     c_sta_cmap = dict(zip(sta_w_data, sta_clrs))
 
-    c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
-    c_sta_Mmap = dict(zip(sta_w_data, c_sta_mrks))
+    #c_sta_mrks = ['d', '+', '1', 'v', 'o', '*','2','3','4','8','s']
+    #c_sta_mrks = markers.MarkerStyle.markers.keys()
+    c_sta_marks = ['1', '2', '3', '4', u'D', '8', u's', u'|', 11, u'P', 9, u'x', u'X', 5, u'_', u'^', u' ', u'd', u'h', u'+', u'*', u'o', u'.', u'p', u'H', u'v', u'', u'<', u'>']
+    print(c_sta_marks)
+    c_sta_Mmap = dict(zip(sta_w_data, c_sta_marks))
 
     h_mod = []
     h_obs = []    
@@ -255,6 +259,7 @@ leg = ax1.get_legend()
 leg.legendHandles[0].set_color('blue')
 leg.legendHandles[1].set_color('red')
 
+plt.show()
 # Save Figure
 file_out = os.path.join(fig_dir, 'Survey' + Vars_to_plot[0] + '.png')
 save_figure(f,file_out,fig_res)
