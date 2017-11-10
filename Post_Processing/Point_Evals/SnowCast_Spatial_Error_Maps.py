@@ -154,24 +154,32 @@ sns.set_context("talk", font_scale=2, rc={"lines.linewidth": 2})
 Below, we can caculate individual metrics, and call a common plotting script to make maps of point errors'''
 
 # Example: Annual Average Bias
+print("Plotting Biases")
 for cvar in ['t','rh','U_2m_above_srf','p','ilwr','iswr']:
     ctype = 'bias'
     da_metric = chmF.calc_bias(obs_dt_val, mod_dt_val, cvar)
     # Make plot
-    cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], ylabel_unit[cvar], cmap_dict[ctype], ctype)
-    # Save Figure
-    file_out = os.path.join(fig_dir, cvar+'_'+ctype+'.png')
-    chmF.save_figure(cf, file_out, fig_res)
+    if da_metric.notnull().sum()>1:
+        cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], ylabel_unit[cvar], cmap_dict[ctype], ctype)
+        # Save Figure
+        file_out = os.path.join(fig_dir, cvar+'_'+ctype+'.png')
+        chmF.save_figure(cf, file_out, fig_res)
+    else:
+        print("No data for ",cvar," skipping plot")
 
 # Example: Hourly RMSE
+print("Plotting RMSE's")
 for cvar in ['t', 'rh', 'U_2m_above_srf', 'p', 'ilwr', 'iswr']:
     ctype = 'rmse'
     da_metric = chmF.calc_rmse(obs_dt_val, mod_dt_val, cvar)
-    # Make plot
-    cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], ylabel_unit[cvar], cmap_dict[ctype], ctype)
-    # Save Figure
-    file_out = os.path.join(fig_dir, cvar+'_'+ctype+'.png')
-    chmF.save_figure(cf, file_out, fig_res)
+    if da_metric.notnull().sum() > 1:
+        # Make plot
+        cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], ylabel_unit[cvar], cmap_dict[ctype], ctype)
+        # Save Figure
+        file_out = os.path.join(fig_dir, cvar+'_'+ctype+'.png')
+        chmF.save_figure(cf, file_out, fig_res)
+    else:
+        print("No data for ", cvar, " skipping plot")
 
 # plt.show()
 

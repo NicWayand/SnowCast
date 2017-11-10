@@ -108,7 +108,7 @@ def calc_rmse(ds_obs, ds_mod, cvar):
 
 # Plot a metric on a map
 def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ctype):
-    fig = plt.figure(figsize=(20, 15))
+    fig = plt.figure(figsize=(20, 12))
     ax1 = plt.axes(projection=ccrs.AlbersEqualArea())
     ax1.imshow(np.flipud(dem.values), extent=[np.min(dem.x), np.max(dem.x),
                                               np.min(dem.y), np.max(dem.y)], aspect=ax1.get_aspect())
@@ -119,5 +119,6 @@ def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ct
     # Add a colorbar
     c1 = fig.colorbar(p1)
     c1.ax.set_ylabel(variable_name+' '+ctype+' ('+variable_units+')')
+    plt.title(variable_name)
 
     return fig
