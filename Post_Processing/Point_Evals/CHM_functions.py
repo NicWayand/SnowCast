@@ -1,4 +1,9 @@
 import numpy as np
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+import xarray as xr
+
+
 
 # Save Figure
 def save_figure(f,file_out,fig_res):
@@ -84,3 +89,35 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
         obs_dt_val = obs_dt_val.where(I_not_null)
 
     return (obs_dt_val, mod_dt_val)
+
+# Calc bias between two DataSets (assumes they have been "commoned" using make_common()
+def calc_bias(ds_obs, ds_mod, cvar):
+
+
+    if cvar == 'p': # Cummulative variables (p is incremental)
+        return ds_mod[cvar].sum(dim='time') - ds_obs[cvar].sum(dim='time')
+    else:
+        return ds_mod[cvar].mean(dim='time') - ds_obs[cvar].mean(dim='time')
+
+# Calc RMSE between two DataSets (assumes they have been "commoned" using make_common()
+def calc_rmse(ds_obs, ds_mod, cvar):
+    # calculate squared errors
+    se = (ds_mod[cvar] - ds_obs[cvar])**2.0
+    # calculate root-mean-squared errors averaged over all stations
+    return xr.ufuncs.sqrt(se.mean(dim=['time']))
+
+# Plot a metric on a map
+def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ctype):
+    fig = plt.figure(figsize=(20, 15))
+    ax1 = plt.axes(projection=ccrs.AlbersEqualArea())
+    ax1.imshow(np.flipud(dem.values), extent=[np.min(dem.x), np.max(dem.x),
+                                              np.min(dem.y), np.max(dem.y)], aspect=ax1.get_aspect())
+    # Add metric values at points
+    p1 = ax1.scatter(da_metric.Lon, da_metric.Lat, transform=ccrs.AlbersEqualArea(), s=100,
+                c=da_metric, zorder=100,
+                cmap=cmap_in)  # yc, xc -- lists or numpy arrays
+    # Add a colorbar
+    c1 = fig.colorbar(p1)
+    c1.ax.set_ylabel(variable_name+' '+ctype+' ('+variable_units+')')
+
+    return fig

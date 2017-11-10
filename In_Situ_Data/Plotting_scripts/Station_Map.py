@@ -6,13 +6,14 @@ import cartopy.io.shapereader as shpreader
 import xarray as xr
 import seaborn as sns
 import sys
+import os
 import imp
 
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('Requires one argument [configuration file]')
+    sys.exit('Requires one argument [configuration file]')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
@@ -25,8 +26,14 @@ data_dir = X.data_dir
 git_dir = X.git_dir
 
 # Load in merged hourly data
-netcdf_file = r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data\QC\Hourly_QC.nc'
-ds = xr.open_dataset(netcdf_file)
+# netcdf_file = r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data\QC\Hourly_QC.nc'
+# ds = xr.open_dataset(netcdf_file)
+
+# Data files in
+file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
+# Load all obs
+ds = xr.open_dataset(file_in, engine='netcdf4') #.load()
+
 # Load in point data
 ds_point = xr.open_dataset(r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data\EC_Snow_Courses\netcdf\EC_Snow_Courses.nc') # MST
 # Load in dem
@@ -250,8 +257,6 @@ X = ds.SnowWaterEquivelentA.where((swe_mean.Lat>50.7467287151959) & (swe_mean.La
                           (swe_mean.Lon>-119.135830621329) & (swe_mean.Lon<-113.917157809765), drop=True)
 X.station_name
 
-
-# In[ ]:
 
 
 

@@ -74,8 +74,8 @@ OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
 OBS_data.rename(vars_all, inplace=True);
 
 # Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
-OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
-print('iswr fill is hack, need to fix upstream')
+# OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
+# print('iswr fill is hack, need to fix upstream')
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
