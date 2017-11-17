@@ -70,7 +70,7 @@ plot_key = {'ilwr_out':'Outgoing Longwave','T_s_0':'Surface temperature','t':'Ai
             'p':'Precipitation','ilwr':'Incoming Longwave','iswr':'Shortwave Radiation',
             'U_2m_above_srf':'Wind Speed','vw_dir':'Wind Direction','swe':'Snow Water Equivalent','snowdepthavg':'Snowdepth'}
 
-ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'°C','t':'°C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
+ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'C','t':'C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
             'U_2m_above_srf':'m/s','vw_dir':'degrees true north','swe':'m','snowdepthavg':'m'}
 
 ###################################
@@ -117,7 +117,8 @@ dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample()
 #################################################
 
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data, c_run_dt_in, dt_eval_hr)
+(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data, c_run_dt_in, dt_eval_hr,
+                                            remove_missing=True, percent_nan_allowed=20)
 
 # Memory Clean up
 OBS_data = None

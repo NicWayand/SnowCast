@@ -3,8 +3,6 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import xarray as xr
 
-
-
 # Save Figure
 def save_figure(f,file_out,fig_res):
 
@@ -75,6 +73,7 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
             print('Resampling')
 
             # Aggregate
+            # TODO: this behaves different on python 2.7 and 3.5, don't know why....
             ds_OUT = ds_IN.resample(freq=dt_eval, dim='time', how='mean', label='left', skipna=skipna)
 
             # Aggregate booleans of not missing, to get fraction in agg period not missing
