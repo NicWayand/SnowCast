@@ -70,7 +70,7 @@ plot_key = {'ilwr_out':'Outgoing Longwave','T_s_0':'Surface temperature','t':'Ai
             'p':'Precipitation','ilwr':'Incoming Longwave','iswr':'Shortwave Radiation',
             'U_2m_above_srf':'Wind Speed','vw_dir':'Wind Direction','swe':'Snow Water Equivalent','snowdepthavg':'Snowdepth'}
 
-ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'(C)','t':'C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
+ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'°C','t':'°C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
             'U_2m_above_srf':'m/s','vw_dir':'degrees true north','swe':'m','snowdepthavg':'m'}
 #
 # # Set font size

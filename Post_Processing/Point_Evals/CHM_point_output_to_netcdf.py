@@ -80,7 +80,9 @@ for c_exp in [chm_run_dir]:
     
     # Convert unit of precipitaiotn from mm to m
     ds['p'] = ds.p / 1000
-    
+    ds['p_rain'] = ds.p_rain / 1000
+    ds['p_snow'] = ds.p_snow / 1000
+
     # Convert unit of swe from kg/m^2 to m
     if 'swe' in ds.data_vars:
         ds['swe'] = ds.swe / 1000

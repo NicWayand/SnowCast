@@ -5,7 +5,7 @@
 
 # Standard modules
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -74,16 +74,19 @@ OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
 OBS_data.rename(vars_all, inplace=True);
 
 # Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
-OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
-print('iswr fill is hack, need to fix upstream')
+# OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
+# print('iswr fill is hack, need to fix upstream')
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
 dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
+
+
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data, c_run_dt_in, dt_eval_hr)
+(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
+                           c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=20)
 
 # Memory Clean up
 OBS_data = None
@@ -93,6 +96,7 @@ sta_list = np.sort(mod_dt_val.station)
 
 obs_linewidth = 2
 mod_linewidth = 2
+
 
 Vars_to_plot = ['t','rh','U_2m_above_srf','p','ilwr','iswr']
 
@@ -113,29 +117,23 @@ for cvar in Vars_to_plot:
         c_obs = obs_dt_val[cvar].sel(station=csta)
         #Find non-nan values
         I_not_nans = ~c_mod.isnull() & ~c_obs.isnull()
-        # If any non-nan, take metrics
-        if np.any(I_not_nans)  and sum(c_obs)!=0: # last check is to remove SW stations with all zeros 
-            # print ('CHECK THIS is not shifting the time...')
-            c_mod_g=c_mod #[I_not_nans]
-            c_obs_g=c_obs #[I_not_nans]
-            
-            # Plot model/obs to get quick check
+        if np.any(I_not_nans):
             if(cvar!='p'):
-                c_mod_g.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
-                c_obs_g.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+                c_mod.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
+                c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
-                # Check there is any precip measured (bug from above where missing all nanas, are avveraged to zeros...)
-                if np.all(sum(c_mod_g)>0 and sum(c_obs_g)>0):
-                    c_mod_g.cumsum(dim='time').plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
-                    c_obs_g.cumsum(dim='time').plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
-            ax1[v_c].set_title(plot_key[cvar])
-            ax1[v_c].set_ylabel(ylabel_unit[cvar])
-
-    # incremetn axes                        
+                if c_obs.sum()!=0:
+                    c_mod.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
+                    c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+        ax1[v_c].set_title(plot_key[cvar])
+        ax1[v_c].set_ylabel(ylabel_unit[cvar])
+    # same x-axis limits
+    ax1[v_c].set_xlim([mod_dt_val.time.isel(time=0).values,mod_dt_val.time.isel(time=-1).values])
+    # increment axes
     v_c = v_c + 1
 f.tight_layout()
 
-# plt.show()
+plt.show()
 
 # Save Figure
 file_out = os.path.join(fig_dir, 'Seasonal_Met.png')
