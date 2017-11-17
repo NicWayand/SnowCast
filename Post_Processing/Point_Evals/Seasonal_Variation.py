@@ -1,11 +1,8 @@
 # Evaluate GEM-CHM seasonal MET at stations
 
-#TODO: plot same x-axis time period
-#TODO: Check filter for missing % of agg period is working
-
 # Standard modules
 import matplotlib
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -133,8 +130,52 @@ for cvar in Vars_to_plot:
     v_c = v_c + 1
 f.tight_layout()
 
-plt.show()
 
 # Save Figure
 file_out = os.path.join(fig_dir, 'Seasonal_Met.png')
 chmF.save_figure(f,file_out,fig_res)
+
+
+Vars_to_plot = ['t','rh','U_2m_above_srf','p','ilwr','iswr']
+
+# Create a new figure and subplots for each variable
+(f2, ax1) = plt.subplots(2, 3, sharey=False)
+f2.set_size_inches(16, 8)
+ax1 = ax1.flatten()
+
+#### Loop through each station
+v_c = 0
+for cvar in Vars_to_plot:
+    #     h_m = [] # init handles for plots
+    #     h_o = []
+    #### Loop through each station
+    for csta in sta_list:
+        # Get mod and obs arrays
+        c_mod = mod_dt_val[cvar].sel(station=csta)
+        c_obs = obs_dt_val[cvar].sel(station=csta)
+        #Find non-nan values
+        I_not_nans = ~c_mod.isnull() & ~c_obs.isnull()
+        if np.any(I_not_nans):
+            if(cvar!='p'):
+                (c_mod-c_obs).plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
+                # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+            else:
+                if c_obs.sum()!=0:
+                    (c_mod-c_obs).plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
+                    # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+        ax1[v_c].set_title(plot_key[cvar])
+        ax1[v_c].set_ylabel(ylabel_unit[cvar])
+    # same x-axis limits
+    ax1[v_c].set_xlim([mod_dt_val.time.isel(time=0).values,mod_dt_val.time.isel(time=-1).values])
+    # increment axes
+    v_c = v_c + 1
+f2.tight_layout()
+
+
+# Save Figure
+file_out = os.path.join(fig_dir, 'Seasonal_Met_Errors.png')
+chmF.save_figure(f2,file_out,fig_res)
+
+
+
+# plt.show()
