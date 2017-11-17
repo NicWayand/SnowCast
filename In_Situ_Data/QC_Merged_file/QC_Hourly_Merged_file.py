@@ -93,8 +93,11 @@ if test_plots:
 
 # Merge with existing incremental precipitation data
 current_inc_precip = ds.IncrementalPrecipitationA
+#print(current_inc_precip.sum(dim='Time_UTC').values)
+# Set stations with majority missing data to nan
 # Use combine_first() so that any existing incremental precip data is not overwritten
-ds['IncrementalPrecipitationA'] = current_inc_precip.combine_first(current_inc_precip)
+ds['IncrementalPrecipitationA'] = current_inc_precip.combine_first(hrl_inc_precip)
+#print(ds['IncrementalPrecipitationA'].sum(dim='Time_UTC').values)
 
 # Quality Control (Hourly)
 
