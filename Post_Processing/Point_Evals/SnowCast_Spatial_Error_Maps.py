@@ -87,6 +87,7 @@ c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 
 # Load all obs
 OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
+print(OBS_data.IncrementalPrecipitationA.sum(dim='Time_UTC').sum(dim='staID'))
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
@@ -161,7 +162,10 @@ for cvar in ['t','rh','U_2m_above_srf','p','ilwr','iswr']:
     da_metric = chmF.calc_bias(obs_dt_val, mod_dt_val, cvar)
     # Make plot
     if da_metric.notnull().sum()>1:
-        cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], ylabel_unit[cvar], cmap_dict[ctype], ctype)
+        cvar_units = ylabel_unit[cvar]
+        if cvar=='p':
+            cvar_units='%' # Overwrite as percent
+        cf = chmF.plot_point_metric(dem, da_metric, plot_key[cvar], cvar_units, cmap_dict[ctype], ctype)
         # Save Figure
         file_out = os.path.join(fig_dir, cvar+'_'+ctype+'.png')
         chmF.save_figure(cf, file_out, fig_res)
