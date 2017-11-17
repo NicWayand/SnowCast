@@ -3,14 +3,16 @@ import xarray as xr
 import sys
 import os
 import imp
+import matplotlib
+import matplotlib.pyplot as plt
 
-#TODO: Add constant check
+#TODO: Add constant check for some variables
 
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('Requires one argument [configuration file]')
+    sys.exit('Requires one argument [configuration file]')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
@@ -36,9 +38,6 @@ ds = xr.open_dataset(hourly_merged) #, chunks={'Time_UTC':1, 'staID':10})
 def QC_min_max(da, vmin, vmax):
     return da.where((da <= vmax) &  (da >= vmin))
 
-
-# In[ ]:
-
 def QC_ROC(da, ROC_thress, ROC_window):
     return da.groupby('staID').apply(lambda x: remove_outliers_via_filter(x,ROC_thress,ROC_window))
 
@@ -55,23 +54,67 @@ def remove_outliers_via_filter(x,threshold,window):
         # Find those data values that the diff was less than or equal to the user supplied threshold
         return x.where(difference <= threshold)
 
+# Convert all precipitation from cummulative to incremental
+test_plots = False
+
+# Aggregate to daily using median of cummulative precipitation, skip missing values
+# If only 1 value per day, it will use this
+dly_cum_precip = ds['CummulativePrecipitationA'].resample(freq='D',
+                       dim='Time_UTC',how='mean',label='right',skipna=True)
+if test_plots:
+    plt.figure()
+    plt.plot(ds.Time_UTC, ds.CummulativePrecipitationA)
+    plt.plot(dly_cum_precip.Time_UTC, dly_cum_precip)
+
+# Difference to get daily increments
+dly_inc_precip = dly_cum_precip.diff(dim='Time_UTC')
+# Set negative values to 0 (have to fill all nan with 0, then fill in orign nan, update with new xarray...)
+# TODO: fix where with new xarray
+c_notnull = dly_inc_precip.notnull()
+dly_inc_precip = dly_inc_precip.where(dly_inc_precip >= 0)
+dly_inc_precip.fillna(0)
+dly_inc_precip.where(c_notnull)
+
+if test_plots:
+    plt.figure()
+    plt.plot(dly_inc_precip.Time_UTC, dly_inc_precip)
+
+# Downsample back to original time step (hourly)
+h_per_day = 24
+dly_inc_precip = dly_inc_precip / h_per_day # reduce daily rate so we can easily upsample to hourly
+# hrl_inc_precip = dly_inc_precip.resample(freq='H',
+#                      dim='Time_UTC', how='mean', label='right', skipna=True, method='bfill')
+# hrl_inc_precip = dly_inc_precip.resample(Time_UTC='H', method='bfill', dim='Time_UTC').mean()
+hrl_inc_precip = dly_inc_precip.reindex_like(ds['IncrementalPrecipitationA'], method='backfill')
+if test_plots:
+    plt.figure()
+    plt.plot(hrl_inc_precip.Time_UTC, hrl_inc_precip)
+    plt.show()
+
+# Merge with existing incremental precipitation data
+current_inc_precip = ds.IncrementalPrecipitationA
+# Use combine_first() so that any existing incremental precip data is not overwritten
+ds['IncrementalPrecipitationA'] = current_inc_precip.combine_first(current_inc_precip)
+
 # Quality Control (Hourly)
 
-# Max and min
-min_limits = {'WindDirectionatA':0, 'ScalarWindSpeedA':0, 'AirMoistureContentA':5,'SnowWaterEquivelentA':0, 'SnowDepthA':0, 'CummulativePrecipitationA':0, 'IncrementalPrecipitationA':0, 'AirtemperatureA':-40}
-max_limits = {'WindDirectionatA':360, 'ScalarWindSpeedA':30, 'AirMoistureContentA':100,'SnowWaterEquivelentA':3, 'SnowDepthA':5.5, 'CummulativePrecipitationA':3, 'IncrementalPrecipitationA':60/1000, 'AirtemperatureA':50}
+# Max and min (inclusive)
+min_limits = {'WindDirectionatA':0, 'ScalarWindSpeedA':0, 'AirMoistureContentA':5,'SnowWaterEquivelentA':0, 'SnowDepthA':0, 'IncrementalPrecipitationA':0, 'AirtemperatureA':-40}
+max_limits = {'WindDirectionatA':360, 'ScalarWindSpeedA':30, 'AirMoistureContentA':100,'SnowWaterEquivelentA':3, 'SnowDepthA':5.5, 'IncrementalPrecipitationA':60/1000, 'AirtemperatureA':50}
 
 for cvar in min_limits.keys():
     print('QC-min-max: '+str(cvar))
     ds[cvar] = QC_min_max(ds[cvar], min_limits[cvar], max_limits[cvar])
 
 # ROC - Use median filter to find values
+# Units are standard meteric (C, m)
 ROC_thress = {'AirMoistureContentA':60,
               'SnowWaterEquivelentA':0.2, 
               'SnowDepthA':0.5, 
               #'CummulativePrecipitationA':20/1000, 
-              'AirtemperatureA':10} # (unit/hr)
+              'AirtemperatureA':10}
 
+# Units are timestep (currenlty only hours)
 ROC_window = {'AirMoistureContentA':6,
               'SnowWaterEquivelentA':4, 
               'SnowDepthA':4, 
@@ -82,15 +125,6 @@ for cvar in ROC_thress.keys():
     print('QC-ROC: '+str(cvar))
     ds[cvar] = QC_ROC(ds[cvar], ROC_thress[cvar], ROC_window[cvar]) 
 
-# Aggregate to daily using mean of cummulated (to help remove noise)
-
-# Precip
-# Daily_cum_precip = ds['CummulativePrecipitationA'].resample(freq='D',dim='Time_UTC',how='median',label='left')
-# ds['Daily_QC_Cumulative_Precipitation'] = Daily_cum_precip.rename({'Time_UTC':'Daily_Time_UTC'})
-
-# SWE
-# Daily_SWE = ds['QC_Snow_Water_Equivalent'].resample(freq='D',dim='Time_UTC',how='mean',label='left')
-# ds['Daily_QC_Snow_Water_Equivalent'] = Daily_SWE.rename({'Time_UTC':'Daily_Time_UTC'})
 
 #DS = '2012-10'
 #DE = '2013-09'

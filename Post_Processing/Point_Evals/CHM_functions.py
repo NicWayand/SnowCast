@@ -14,6 +14,17 @@ def save_figure(f,file_out,fig_res):
 # Function that makes two data sets common:
 def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percent_nan_allowed=20):
 
+    # In case data sets came from python 2.7 and 3.5, remove bytes
+    def decode_strs(ds):
+
+        for cvar in ['station','station_name','network']:
+            if cvar in ds: # Model does not have station_name or network coords
+                if ds[cvar].dtype!='object':
+                    ds[cvar] = np.array([x.decode("utf-8") for x in ds[cvar].values])
+        return ds
+
+    ds_obs = decode_strs(ds_obs)
+    ds_mod = decode_strs(ds_mod)
 
     # dt_eval = 'H' # MS (month start), H (hour), W (week)
     # How do we handel missing values within an aggregation period?
