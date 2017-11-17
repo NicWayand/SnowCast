@@ -152,7 +152,7 @@ lon_pts = EC_data_crho.Lon.values
 I_not_nan = ~np.isnan(lat_pts) & ~np.isnan(lon_pts)
 lat_pts = lat_pts[I_not_nan]
 lon_pts = lon_pts[I_not_nan]
-ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), marker='o', s=50, c='m', zorder=200, label='EC Snow Course') #yc, xc -- lists or numpy arrays
+ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), marker='o', s=50, c='m', zorder=200, label='Alberta Environment Snow Course') #yc, xc -- lists or numpy arrays
 ax1.add_geometries(p_sh, ccrs.PlateCarree(),
                   edgecolor='black', facecolor='none', alpha=0.5)
 leg = plt.legend(fancybox=True, loc='lower left', frameon=True, fontsize='xx-large', bbox_to_anchor=(-0.009, -0.009))

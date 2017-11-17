@@ -87,7 +87,7 @@ c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 
 # Load all obs
 OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
-print(OBS_data.IncrementalPrecipitationA.sum(dim='Time_UTC').sum(dim='staID'))
+# print(OBS_data.IncrementalPrecipitationA.sum(dim='Time_UTC').sum(dim='staID'))
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')

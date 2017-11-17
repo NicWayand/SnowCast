@@ -106,7 +106,11 @@ def calc_bias(ds_obs, ds_mod, cvar):
 
 
     if cvar == 'p': # Cummulative variables (p is incremental)
-        return (ds_mod[cvar] - ds_obs[cvar]).sum(dim='time')/ds_obs[cvar].sum(dim='time')*100
+        x = (ds_mod[cvar] - ds_obs[cvar]).sum(dim='time')/ds_obs[cvar].sum(dim='time')*100
+        # Screen for crazy biases that are most likely obs errors TODO
+        x = x.where((x>=-100) & (x<=100))
+        print("Removing crazy precip biases")
+        return x
     else:
         return ds_mod[cvar].mean(dim='time') - ds_obs[cvar].mean(dim='time')
 
