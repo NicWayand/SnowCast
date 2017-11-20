@@ -145,7 +145,7 @@ var_min_delta = {'snowdepthavg':0.1,'swe':0.01} # Min max value for plotting cha
 
 # Make single variable plots
 var_names_2_plot = ['snowdepthavg','swe']
-last_N = 2 # last output CHM vtu files to plot
+last_N = 10 # last output CHM vtu files to plot
 
 # Make dirs
 for var2plot in var_names_2_plot:

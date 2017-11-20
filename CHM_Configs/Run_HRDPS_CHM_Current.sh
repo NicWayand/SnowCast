@@ -22,6 +22,10 @@ echo "Running Plotting scripts"
 /home/nwayand/custom/anaconda2/bin/python /home/nwayand/SnowCast/Post_Processing/plot_scripts/Plot_SnowCast.py ../Path_Config.py forecast_CRHO_spinup
 echo "Plotting complete"
 
+# Making GIFS
+../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures/snowdepthavg
+../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/forecast_CRHO_spinup/figures/swe
+
 # Upload to server
 # TODO: build into python plotting scripts like this (http://stackoverflow.com/questions/12613797/python-script-uploading-files-via-ftp)
 echo "Uploading to server"

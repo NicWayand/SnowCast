@@ -102,12 +102,19 @@ ds['IncrementalPrecipitationA'] = current_inc_precip.combine_first(hrl_inc_preci
 # Quality Control (Hourly)
 
 # Max and min (inclusive)
-min_limits = {'WindDirectionatA':0, 'ScalarWindSpeedA':0, 'AirMoistureContentA':5,'SnowWaterEquivelentA':0, 'SnowDepthA':0, 'IncrementalPrecipitationA':0, 'AirtemperatureA':-40}
-max_limits = {'WindDirectionatA':360, 'ScalarWindSpeedA':30, 'AirMoistureContentA':100,'SnowWaterEquivelentA':3, 'SnowDepthA':5.5, 'IncrementalPrecipitationA':60/1000, 'AirtemperatureA':50}
+min_limits = {'WindDirectionatA':-0, 'ScalarWindSpeedA':-0, 'AirMoistureContentA':5,'SnowWaterEquivelentA':-0, 'SnowDepthA':-0, 'IncrementalPrecipitationA':-0, 'AirtemperatureA':-40}
+max_limits = {'WindDirectionatA':360, 'ScalarWindSpeedA':30, 'AirMoistureContentA':100,'SnowWaterEquivelentA':3, 'SnowDepthA':5.5, 'IncrementalPrecipitationA':0.06, 'AirtemperatureA':50}
+
+#print(ds['IncrementalPrecipitationA'].mean())
 
 for cvar in min_limits.keys():
     print('QC-min-max: '+str(cvar))
+    print('Start missing ',ds[cvar].isnull().sum().values)
     ds[cvar] = QC_min_max(ds[cvar], min_limits[cvar], max_limits[cvar])
+    print('End missing ',ds[cvar].isnull().sum().values)
+
+#print(ds['IncrementalPrecipitationA'].notnull().sum(dim='Time_UTC').values)
+#print(ds['IncrementalPrecipitationA'].sum(dim='Time_UTC').values)
 
 # ROC - Use median filter to find values
 # Units are standard meteric (C, m)
