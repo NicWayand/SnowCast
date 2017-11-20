@@ -3,8 +3,6 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import xarray as xr
 
-
-
 # Save Figure
 def save_figure(f,file_out,fig_res):
 
@@ -13,8 +11,9 @@ def save_figure(f,file_out,fig_res):
 
 # Function that makes two data sets common:
 def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percent_nan_allowed=20):
-
     # In case data sets came from python 2.7 and 3.5, remove bytes
+    # TODO: instead of decoding, throw error if ds_obs and ds_mod were not created in the same python
+    # environent (i.e. 2.7 and 2.7).
     '''def decode_strs(ds):
 
         for cvar in ['station','station_name','network']:
@@ -75,6 +74,7 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
             print('Resampling')
 
             # Aggregate
+            # TODO: this behaves different on python 2.7 and 3.5, don't know why....
             ds_OUT = ds_IN.resample(freq=dt_eval, dim='time', how='mean', label='left', skipna=skipna)
 
             # Aggregate booleans of not missing, to get fraction in agg period not missing
@@ -91,7 +91,7 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
 
     obs_dt_val = agg_time(ds_obs, dt_eval, dt_eval_hr, percent_nan_allowed)
     mod_dt_val = agg_time(ds_mod, dt_eval, dt_eval_hr, percent_nan_allowed)
-
+    # print(obs_dt_val.p.sum(dim='time'))
     # Common non-Missing data (optional)
     if remove_missing:
         print("Removing missing observed timesteps from model")
@@ -106,7 +106,11 @@ def calc_bias(ds_obs, ds_mod, cvar):
 
 
     if cvar == 'p': # Cummulative variables (p is incremental)
-        return ds_mod[cvar].sum(dim='time') - ds_obs[cvar].sum(dim='time')
+        x = (ds_mod[cvar] - ds_obs[cvar]).sum(dim='time')/ds_obs[cvar].sum(dim='time')*100
+        # Screen for crazy biases that are most likely obs errors TODO
+        x = x.where((x>=-100) & (x<=100))
+        print("Removing crazy precip biases")
+        return x
     else:
         return ds_mod[cvar].mean(dim='time') - ds_obs[cvar].mean(dim='time')
 

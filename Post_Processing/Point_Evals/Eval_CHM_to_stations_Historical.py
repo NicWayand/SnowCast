@@ -88,9 +88,9 @@ OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
 # Rename obs variable names to model variable names
 OBS_data.rename(vars_all, inplace=True);
 
-# Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
-OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
-print('iswr fill is hack, need to fix upstream')
+# # Filling in missing SW values at night (these were negative values that in QC SHOULD have been set to zero)
+# OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
+# print('iswr fill is hack, need to fix upstream')
 
 # Snow surveys
 SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
@@ -104,7 +104,10 @@ dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample()
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
 # Get common obs and model
-(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data, c_run_dt_in, dt_eval_hr)
+percent_nan_allowed = 50
+print("Alowing ",percent_nan_allowed," percent missing in period averages.")
+(obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
+        c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=percent_nan_allowed)
 
 # Memory Clean up
 OBS_data = None
