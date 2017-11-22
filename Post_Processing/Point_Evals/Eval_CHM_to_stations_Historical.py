@@ -105,7 +105,7 @@ EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdep
 
 # Get common obs and model
 percent_nan_allowed = 50
-print("Alowing ",percent_nan_allowed," percent missing in period averages.")
+print("Allowing ",percent_nan_allowed," percent missing in period averages.")
 (obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
         c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=percent_nan_allowed)
 

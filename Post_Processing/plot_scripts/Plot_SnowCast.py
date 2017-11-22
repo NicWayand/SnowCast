@@ -4,10 +4,12 @@ import shutil
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
-mpl.use('Agg')
+# mpl.use('Agg')
 import matplotlib.pyplot as plt
 import glob
+from pyproj import Proj, transform
 import imp
+import xarray as xr
 import time
 import vtk
 from vtk.util import numpy_support as VN
@@ -38,6 +40,7 @@ X = imp.load_source('',configfile)
 
 # Assign to local variables
 git_dir   = X.git_dir
+data_dir = X.data_dir
 
 # Dir to vtu files
 main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
@@ -46,6 +49,31 @@ fig_dir   = os.path.join(main_dir, 'figures')
 prefix = 'SC'
 
 local_time_offset = -7 # Offset to local standard time (i.e. -7 for MST)
+
+# Load in Obs
+
+# Make dictionary of obs:model variable names to compare
+# model:obs
+vars_all = {'AirtemperatureA':'t','AirMoistureContentA':'rh','IncrementalPrecipitationA':'p',
+            'ScalarWindSpeedA':'U_2m_above_srf','DownwardSolarRadiation':'iswr','DownwardTerrestrialRad':'ilwr',
+            'UpwardTerrestrialRad':'ilwr_out',
+            'SnowWaterEquivelentA':'swe','SnowDepthA':'snowdepthavg','WindDirectionatA':'vw_dir',
+           'Time_UTC':'time','staID':'station'}
+
+plot_key = {'ilwr_out':'Outgoing Longwave','T_s_0':'Surface temperature','t':'Air Temperature','rh':'Relative Humidity',
+            'p':'Precipitation','ilwr':'Incoming Longwave','iswr':'Shortwave Radiation',
+            'U_2m_above_srf':'Wind Speed','vw_dir':'Wind Direction','swe':'Snow Water Equivalent','snowdepthavg':'Snowdepth'}
+
+ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'C','t':'C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
+            'U_2m_above_srf':'m/s','vw_dir':'degrees true north','swe':'m','snowdepthavg':'m'}
+
+
+file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
+# Load all obs
+OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
+# Rename obs variable names to model variable names
+OBS_data.rename(vars_all, inplace=True);
+
 
 # Make fig dir
 if not os.path.isdir(fig_dir):
@@ -67,7 +95,8 @@ def make_map(projection=ccrs.PlateCarree()):
 def save_figure(f,file_out,fig_res):
     f.savefig(file_out,bbox_inches='tight',dpi=fig_res)
 
-def plot_variable(tri_var, var2plot, time_start, c_timestamp, fig_res, var_vmin, var_vmax):
+def plot_variable(tri_var, var2plot, time_start, c_timestamp,
+                  fig_res, var_vmin, var_vmax, obs_pts, proj_in):
     # Make map
     fig, ax = make_map()
 
@@ -79,6 +108,7 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp, fig_res, var_vmin,
     
     # Make tri plot
     p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],
+                      transform = proj_in,
                       facecolors=tri_var * scale_factor[var2plot],
                       cmap=cmap_dict[var2plot],
                       vmin= var_vmin * scale_factor[var2plot],
@@ -89,6 +119,14 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp, fig_res, var_vmin,
         ax.set_title(title_dict[var2plot] + '.\n' + str_time_start + ' to\n'+str_timestamp + '\n')
     else:
         ax.set_title(title_dict[var2plot]+'.\n'+str_timestamp+'\n')
+
+    # Plot scatter of Obs (if exists)
+    if obs_pts is not None:
+        if (obs_pts.notnull().sum()>0):
+            p2 = ax.scatter(obs_pts.X, obs_pts.Y, s=100,
+                            transform=proj_in,
+                        c=obs_pts*scale_factor[var2plot], zorder=500,
+                        cmap=cmap_dict[var2plot])
 
     # Add colorbar
     b1 = fig.colorbar(p1)
@@ -125,7 +163,26 @@ cmesh = vfunc.get_mesh(vtu_files[-1])
 # Get tri info
 tri_info = vfunc.get_triangle(cmesh)
 
-# Correct CHM units (NOT STANDARD METRIC....)
+# Get mesh coords system
+if not cmesh.GetFieldData().HasArray("proj4"):
+    print("VTU file does not contain a proj4 field")
+    sys.exit()
+vtu_proj4 = Proj(cmesh.GetFieldData().GetAbstractArray("proj4").GetValue(0))
+
+# Covert lat/long to porjective coord system of CHM
+outProj = Proj(init='epsg:4326')
+obs_X, obs_Y = transform(outProj, vtu_proj4,OBS_data['Lon'].values, OBS_data['Lat'].values)
+OBS_data.coords['X'] = xr.DataArray(obs_X, coords={'station':OBS_data.station}, dims=['station'])
+OBS_data.coords['Y'] = xr.DataArray(obs_Y, coords={'station':OBS_data.station}, dims=['station'])
+# Trim to only stations within mesh domain
+m_x_lims = [np.min(tri_info['X']), np.max(tri_info['X'])]
+m_y_lims = [np.min(tri_info['Y']), np.max(tri_info['Y'])]
+OBS_data = OBS_data.where( (OBS_data['X']>=m_x_lims[0]) &
+                           (OBS_data['X']<=m_x_lims[1]) &
+                          (OBS_data['Y']>=m_y_lims[0]) &
+                           (OBS_data['Y'] <= m_y_lims[1]), drop=True)
+
+# Correct CHM units
 chm_units_fix = {'snowdepthavg':1, 'swe':1.0/1000} # to m
 
 # Plotting dictionaries
@@ -157,15 +214,24 @@ for var2plot in var_names_2_plot:
     # Get data for all time stamps
     df_cvar = vfunc.get_multi_mesh_var_dask(ps.tail(last_N).values, var2plot, ps.tail(last_N).index)
     df_cvar = df_cvar * chm_units_fix[var2plot] # Units to Metric standard (m)
-    # Compute quanitil
+    # Compute quantile
     df_cvar_max  = np.percentile(df_cvar.values[:], 90)
     print(df_cvar_max)    
-    #df_cvar_max = df_cvar.max().max()*0.8 # Set max at 80%
     df_cvar_min = 0
+
+    # See if we have obs for this variable
+    if var2plot in OBS_data:
+        obs_cvar = OBS_data[var2plot]
+
     for ct in df_cvar.index:
         print('printing ',ct)
+        # See if we have any observations for this time step (with some tolerance)
+        obs_ct = obs_cvar.sel(time=ct, method='nearest')
+        if (obs_ct.time-np.datetime64(ct)) > np.timedelta64(6,'h'): # 6 hour tolerance
+            obs_ct = None
         # Plot and Save
-        file_out = plot_variable(df_cvar.loc[ct].values, var2plot, [], ct, fig_res, df_cvar_min, df_cvar_max)
+        file_out = plot_variable(df_cvar.loc[ct].values, var2plot, [], ct,
+                                 fig_res, df_cvar_min, df_cvar_max, obs_ct, vtu_proj4)
         print('fig saved')
         
         # If last time
@@ -195,7 +261,9 @@ for var2plot in var_names_2_plot:
     print(df_cvar_min, df_cvar_max)
     print('printing ',time_fut,' minus ',time_now_near)
     # Plot and Save
-    file_out = plot_variable(df_dif.values, var2plot+'_diff', time_now_near, time_fut, fig_res, df_cvar_min, df_cvar_max)
+    file_out = plot_variable(df_dif.values, var2plot+'_diff',
+                             time_now_near, time_fut, fig_res, df_cvar_min,
+                             df_cvar_max, None, vtu_proj4)
     print('fig saved')
 
 
