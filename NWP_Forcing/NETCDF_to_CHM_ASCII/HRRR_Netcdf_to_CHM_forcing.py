@@ -130,7 +130,7 @@ for cy in years:
         s_dt = 1*60*60 # seconds in an hour
         ds['p'] = ds.PRATE_P0_L1_GLC0 * s_dt
         #ds.rename({'APCP_surface':'p'},inplace=True) # density and m to mm cancels out, so just rename to save time
-
+        print(ds)
 	# Rename time
 	ds.rename({'initial_time0_hours':'datetime'},inplace=True)
 
@@ -181,7 +181,7 @@ for cy in years:
                     # clean up dataset
                     sub_ds = None
 		    # Drop unwanted vars/coords 
-		    df.drop(['initial_time0_encoded','gridrot_0','initial_time0','PRATE_P0_L1_GLC0','HGT_surface','latitude','longitude'], axis=1, inplace=True)
+		    df.drop(['initial_time0_encoded','initial_time0','gridrot_0','PRATE_P0_L1_GLC0','HGT_surface','latitude','longitude'], axis=1, inplace=True)
 
 		    # Check if first month
 		    if first_month:

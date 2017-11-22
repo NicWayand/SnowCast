@@ -6,13 +6,15 @@
 netcdf_dir  = '/media/data2/HRRR/yakima/netcdf'
 
 # Dir where output ascii files should go
-ascii_dir    = '/media/data2/HRRR/yakima/ascii'
+ascii_dir    = '/media/data1/HRRR/yakima/ascii'
 
 # File that contains the elevation (height)
 hgt_file = '/media/data2/HRRR/yakima/HGT/subROI_HRRRfromPando_20170310_h00_f00_HGT_surface.nc'
 
 # Dictionary list to change GEM variables names into CHM required names
-var_dic = {'TMP_P0_L103_GLC0':'t','DLWRF_P0_L1_GLC0':'Qli','DSWRF_P0_L1_GLC0':'Qsi','PRES_P0_L1_GLC0':'press','CPOFP_P0_L1_GLC0':'fraction_frozen','RH_P0_L103_GLC0':'rh'}
+var_dic = {'TMP_P0_L103_GLC0':'t','DLWRF_P0_L1_GLC0':'Qli','DSWRF_P0_L1_GLC0':'Qsi','PRES_P0_L1_GLC0':'press','RH_P0_L103_GLC0':'rh'}
+
+# 'CPOFP_P0_L1_GLC0':'fraction_frozen'
 
 #########################################
 # Configuration for Netcdf_to_CHM.py
