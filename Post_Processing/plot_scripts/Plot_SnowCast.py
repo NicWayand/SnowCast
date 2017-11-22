@@ -107,8 +107,7 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp,
     file_timestamp = pd.to_datetime(c_timestamp).strftime('%Y_%m_%d_%H:%M:%S_MST.png')
     
     # Make tri plot
-    p1 = ax.tripcolor(tri_info['X'], tri_info['Y'], tri_info['triang'],
-                      transform = proj_in,
+    p1 = ax.tripcolor(tri_info['Lon'], tri_info['Lat'], tri_info['triang'],
                       facecolors=tri_var * scale_factor[var2plot],
                       cmap=cmap_dict[var2plot],
                       vmin= var_vmin * scale_factor[var2plot],
@@ -123,8 +122,7 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp,
     # Plot scatter of Obs (if exists)
     if obs_pts is not None:
         if (obs_pts.notnull().sum()>0):
-            p2 = ax.scatter(obs_pts.X, obs_pts.Y, s=100,
-                            transform=proj_in,
+            p2 = ax.scatter(obs_pts.Lon, obs_pts.Lat, s=100,
                         c=obs_pts*scale_factor[var2plot], zorder=500,
                         cmap=cmap_dict[var2plot])
 
@@ -169,18 +167,30 @@ if not cmesh.GetFieldData().HasArray("proj4"):
     sys.exit()
 vtu_proj4 = Proj(cmesh.GetFieldData().GetAbstractArray("proj4").GetValue(0))
 
-# Covert lat/long to porjective coord system of CHM
+# Convert mesh to geographic
 outProj = Proj(init='epsg:4326')
-obs_X, obs_Y = transform(outProj, vtu_proj4,OBS_data['Lon'].values, OBS_data['Lat'].values)
-OBS_data.coords['X'] = xr.DataArray(obs_X, coords={'station':OBS_data.station}, dims=['station'])
-OBS_data.coords['Y'] = xr.DataArray(obs_Y, coords={'station':OBS_data.station}, dims=['station'])
-# Trim to only stations within mesh domain
-m_x_lims = [np.min(tri_info['X']), np.max(tri_info['X'])]
-m_y_lims = [np.min(tri_info['Y']), np.max(tri_info['Y'])]
-OBS_data = OBS_data.where( (OBS_data['X']>=m_x_lims[0]) &
-                           (OBS_data['X']<=m_x_lims[1]) &
-                          (OBS_data['Y']>=m_y_lims[0]) &
-                           (OBS_data['Y'] <= m_y_lims[1]), drop=True)
+tri_info['Lon'], tri_info['Lat'] = transform(vtu_proj4, outProj, tri_info['X'], tri_info['Y'])
+# Trim OBS to only stations within mesh domain
+m_lon_lims = [np.min(tri_info['Lon']), np.max(tri_info['Lon'])]
+m_lat_lims = [np.min(tri_info['Lat']), np.max(tri_info['Lat'])]
+OBS_data = OBS_data.where( (OBS_data['Lon']>=m_lon_lims[0]) &
+                           (OBS_data['Lon']<=m_lon_lims[1]) &
+                          (OBS_data['Lat']>=m_lat_lims[0]) &
+                           (OBS_data['Lat'] <= m_lat_lims[1]), drop=True)
+
+
+# # Covert lat/long to porjective coord system of CHM
+# outProj = Proj(init='epsg:4326')
+# obs_X, obs_Y = transform(outProj, vtu_proj4,OBS_data['Lon'].values, OBS_data['Lat'].values)
+# OBS_data.coords['X'] = xr.DataArray(obs_X, coords={'station':OBS_data.station}, dims=['station'])
+# OBS_data.coords['Y'] = xr.DataArray(obs_Y, coords={'station':OBS_data.station}, dims=['station'])
+# # Trim to only stations within mesh domain
+# m_x_lims = [np.min(tri_info['X']), np.max(tri_info['X'])]
+# m_y_lims = [np.min(tri_info['Y']), np.max(tri_info['Y'])]
+# OBS_data = OBS_data.where( (OBS_data['X']>=m_x_lims[0]) &
+#                            (OBS_data['X']<=m_x_lims[1]) &
+#                           (OBS_data['Y']>=m_y_lims[0]) &
+#                            (OBS_data['Y'] <= m_y_lims[1]), drop=True)
 
 # Correct CHM units
 chm_units_fix = {'snowdepthavg':1, 'swe':1.0/1000} # to m
