@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
-# mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import glob
 from pyproj import Proj, transform
@@ -22,7 +22,7 @@ import seaborn as sns
 
 # General plotting settings
 sns.set_style('ticks')
-sns.set_context("talk", font_scale=3, rc={"lines.linewidth": 2.5})
+sns.set_context("talk", font_scale=2, rc={"lines.linewidth": 2})
 fig_res = 90 # dpi
 
 # Load in config file
@@ -47,6 +47,8 @@ main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
 vtu_dir   = os.path.join(main_dir, 'meshes')
 fig_dir   = os.path.join(main_dir, 'figures')
 prefix = 'SC'
+
+last_N = 10 # last output CHM vtu files to plot
 
 local_time_offset = -7 # Offset to local standard time (i.e. -7 for MST)
 
@@ -84,12 +86,17 @@ if not os.path.isdir(fig_dir):
 # Plot setup
 def make_map(projection=ccrs.PlateCarree()):
     fig, ax = plt.subplots(subplot_kw=dict(projection=projection))
-    fig.set_size_inches(20, 20)
+    fig.set_size_inches(20, 12)
     #ax.coastlines(resolution='100m', zorder=1)
-    gl = ax.gridlines(draw_labels=True)
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                       linewidth=2, color='gray', alpha=0.4, linestyle='--')
     gl.xlabels_top = gl.ylabels_right = False
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
+    gl.xlabel_style = {'size': 'medium'}
+    gl.ylabel_style = {'size': 'medium'}
+
     return fig, ax
 
 def save_figure(f,file_out,fig_res):
@@ -122,19 +129,27 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp,
     # Plot scatter of Obs (if exists)
     if obs_pts is not None:
         if (obs_pts.notnull().sum()>0):
-            p2 = ax.scatter(obs_pts.Lon, obs_pts.Lat, s=100,
-                        c=obs_pts*scale_factor[var2plot], zorder=500,
-                        cmap=cmap_dict[var2plot])
+            p2 = ax.scatter(obs_pts.Lon, obs_pts.Lat, s=200,
+                        c=obs_pts.values*scale_factor[var2plot], zorder=500,
+                        cmap=cmap_dict[var2plot],
+                        vmin=var_vmin * scale_factor[var2plot],
+                        vmax=var_vmax * scale_factor[var2plot],
+                        edgecolors='k', linewidths=2)
 
     # Add colorbar
     b1 = fig.colorbar(p1)
     b1.ax.set_ylabel(ylabel_dict[var2plot])
-    
-    # Add grid lines
-    gl = ax.gridlines(draw_labels=True)
-    gl.xlabels_top = gl.ylabels_right = False
-    gl.xformatter = LONGITUDE_FORMATTER
-    gl.yformatter = LATITUDE_FORMATTER
+
+    # Set map extent
+    c_extent = [np.min(tri_info['Lon']), np.max(tri_info['Lon']),
+                     np.min(tri_info['Lat']), np.max(tri_info['Lat'])]
+    ax.set_extent(c_extent, ccrs.PlateCarree())
+
+    # Add legend
+    obs_artist = plt.Line2D((0, 1), (0, 0), color='k',
+                            marker='o', linestyle='')
+    ax.legend([obs_artist], ['Observed'], loc='upper right')
+
 
     # Save figure
     if time_start:
@@ -212,7 +227,7 @@ var_min_delta = {'snowdepthavg':0.1,'swe':0.01} # Min max value for plotting cha
 
 # Make single variable plots
 var_names_2_plot = ['snowdepthavg','swe']
-last_N = 10 # last output CHM vtu files to plot
+
 
 # Make dirs
 for var2plot in var_names_2_plot:
@@ -225,7 +240,7 @@ for var2plot in var_names_2_plot:
     df_cvar = vfunc.get_multi_mesh_var_dask(ps.tail(last_N).values, var2plot, ps.tail(last_N).index)
     df_cvar = df_cvar * chm_units_fix[var2plot] # Units to Metric standard (m)
     # Compute quantile
-    df_cvar_max  = np.percentile(df_cvar.values[:], 90)
+    df_cvar_max  = np.percentile(df_cvar.values[:], 95)
     print(df_cvar_max)    
     df_cvar_min = 0
 
@@ -237,8 +252,10 @@ for var2plot in var_names_2_plot:
         print('printing ',ct)
         # See if we have any observations for this time step (with some tolerance)
         obs_ct = obs_cvar.sel(time=ct, method='nearest')
-        if (obs_ct.time-np.datetime64(ct)) > np.timedelta64(6,'h'): # 6 hour tolerance
+        # print(np.abs((obs_ct.time.values-np.datetime64(ct))))
+        if np.abs((obs_ct.time.values-np.datetime64(ct))) > np.timedelta64(6,'h'): # 6 hour tolerance
             obs_ct = None
+            print("No Obs within 6 hours")
         # Plot and Save
         file_out = plot_variable(df_cvar.loc[ct].values, var2plot, [], ct,
                                  fig_res, df_cvar_min, df_cvar_max, obs_ct, vtu_proj4)

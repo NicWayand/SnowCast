@@ -1,5 +1,5 @@
 #!/bin/bash
-OMP_NUM_THREADS=2
+OMP_NUM_THREADS=4
 # Stop of get any simple error
 set -e
 
@@ -25,8 +25,8 @@ cd /home/nwayand/snow_models/output_CHM/SnowCast/CHM_Configs
 #echo "Plotting complete"
 
 # Making GIFS
-../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/GDPS_Historical/figures/snowdepthavg
-../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/GDPS_Historical/figures/swe
+../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/GDPS_Current/figures/snowdepthavg
+../Post_Processing/GIFS/png_to_gif.sh /home/nwayand/SnowCast/CHM_Configs/GDPS_Current/figures/swe
 
 echo Uploading to server
 /home/nwayand/SnowCast/Web_Upload/Static_Figure_upload.sh
