@@ -146,10 +146,9 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp,
     ax.set_extent(c_extent, ccrs.PlateCarree())
 
     # Add legend
-    obs_artist = plt.Line2D((0, 1), (0, 0), color='k',
-                            marker='o', linestyle='')
-    ax.legend([obs_artist], ['Observed'], loc='upper right')
-
+    if obs_pts is not None:
+        obs_artist = plt.Line2D((0, 1), (0, 0), color='k', marker='o', linestyle='')
+        ax.legend([obs_artist], ['Observed'], loc='upper right')
 
     # Save figure
     if time_start:
@@ -208,26 +207,28 @@ OBS_data = OBS_data.where( (OBS_data['Lon']>=m_lon_lims[0]) &
 #                            (OBS_data['Y'] <= m_y_lims[1]), drop=True)
 
 # Correct CHM units
-chm_units_fix = {'snowdepthavg':1, 'swe':1.0/1000} # to m
+chm_units_fix = {'snowdepthavg':1, 'swe':1.0/1000, 'p_snow':1.0/1000, 'p_rain':1.0/1000} # to m
 
 # Plotting dictionaries
-ylabel_dict = {'snowdepthavg':'Snowdepth (cm)','swe':'SWE(mm)',
+ylabel_dict = {'snowdepthavg':'Snowdepth (cm)','swe':'SWE (mm)', 'p_snow':'Liquid equivalent (mm)', 
+                'p_rain':'Rainfall (mm)',
                'snowdepthavg_diff': 'Snowdepth change (cm)', 'swe_diff': 'SWE change (mm)'}
 # From meteric (m) to display units
-scale_factor = {'snowdepthavg':100,'swe':1000,
+scale_factor = {'snowdepthavg':100,'swe':1000, 'p_snow':1000, 'p_rain':1000,
                 'snowdepthavg_diff': 100, 'swe_diff': 1000,}
-title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE',
+title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE','p_snow':'Snowfall','p_rain':'Rainfall',
               'snowdepthavg_diff': 'Snowdepth change', 'swe_diff': 'SWE change'}
 cmap_dict = {'snowdepthavg':mpl.colors.ListedColormap(sns.color_palette("Blues", 12)),
+             'p_rain':mpl.colors.ListedColormap(sns.color_palette("Reds", 12)),
+             'p_snow':mpl.colors.ListedColormap(sns.color_palette("Blues", 12)),
              'swe':mpl.colors.ListedColormap(sns.color_palette("Reds", 12)),
              'snowdepthavg_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12)),
              'swe_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12))}
-var_min_delta = {'snowdepthavg':0.1,'swe':0.01} # Min max value for plotting change (m)
+var_min_delta = {'snowdepthavg':0.1,'swe':0.01, 'p_snow':0.01} # Min max value for plotting change (m)
 
 
 # Make single variable plots
-var_names_2_plot = ['snowdepthavg','swe']
-
+var_names_2_plot = ['snowdepthavg','swe','p_snow']
 
 # Make dirs
 for var2plot in var_names_2_plot:
@@ -253,9 +254,12 @@ for var2plot in var_names_2_plot:
         # See if we have any observations for this time step (with some tolerance)
         obs_ct = obs_cvar.sel(time=ct, method='nearest')
         # print(np.abs((obs_ct.time.values-np.datetime64(ct))))
-        if np.abs((obs_ct.time.values-np.datetime64(ct))) > np.timedelta64(6,'h'): # 6 hour tolerance
+        dt_diff = np.abs((obs_ct.time.values-np.datetime64(ct))) > np.timedelta64(6,'h') # 6 hour tolerance
+        noObs = obs_ct.notnull().sum(dim='station')==0
+        if dt_diff | noObs:
             obs_ct = None
-            print("No Obs within 6 hours")
+            print("No Obs within 6 hours OR no non-missing measurements")
+        
         # Plot and Save
         file_out = plot_variable(df_cvar.loc[ct].values, var2plot, [], ct,
                                  fig_res, df_cvar_min, df_cvar_max, obs_ct, vtu_proj4)
@@ -275,6 +279,8 @@ time_now_near = ps.index[i]
 time_fut = ps.index[-1]
 
 for var2plot in var_names_2_plot:
+    if var2plot in ['p_snow']: # Skip for some variables
+        continue
     # Get data for all time stamps
     df_cvar = vfunc.get_multi_mesh_var_dask(ps.loc[[time_now_near, time_fut]].values,
                                             var2plot, ps.loc[[time_now_near, time_fut]].index)

@@ -12,8 +12,8 @@
 
     //"notification_script":"./finished.sh",
    // "station_search_radius":0.1,//0.22, // decimal degrees
-    "station_N_nearest":1,
-    "interpolant":"nearest",
+    "station_N_nearest":4,
+    "interpolant":"spline",
     "per_triangle_timeseries":"false",
     "ui":false,
     "debug_level":"debug",
