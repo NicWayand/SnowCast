@@ -13,7 +13,7 @@ os.environ['TZ'] = 'GMT'
 time.tzset()
 
 # Dirs
-netcdf_dir = '/media/data2/GEM/GDPS/netcdf_archive'
+netcdf_dir = '/media/data3/nicway/GEM/GDPS/netcdf_archive'
 os.chdir(netcdf_dir)
 
 # Takes one argument, the date of missing forecast netcdf file (UTC)

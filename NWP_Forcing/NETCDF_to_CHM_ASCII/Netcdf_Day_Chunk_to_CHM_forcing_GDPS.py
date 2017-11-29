@@ -52,7 +52,7 @@ os.chdir(netcdf_dir)
 
 # Get all file names
 all_files =  sorted(glob.glob('*.nc'))
-hgt_file = r'/media/data2/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
+hgt_file = r'/media/data3/nicway/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
 ds_hgt_in = xr.open_dataset(hgt_file).isel(time=0).drop('time')
 
 

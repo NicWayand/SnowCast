@@ -3,13 +3,13 @@
 ################################################
 
 # Dir where output netcdf files go
-netcdf_dir  = '/media/data2/GEM/archive/SOAP/netcdf'
+netcdf_dir  = '/media/data3/nicway/GEM/archive/SOAP/netcdf'
 
 # Dir where output ascii files should go
-ascii_dir    = '/media/data2/GEM/archive/SOAP/ascii_HRDPS_SnowCast_full'
+ascii_dir    = '/media/data3/nicway/GEM/archive/SOAP/ascii_HRDPS_SnowCast_full'
 
 # File that contains the elevation (height)
-hgt_file = '/media/data2/GEM/archive/SOAP/kananaskis_SHRPD_HRPDS_2.5km_2014_11_UTC_HGT_SFC.nc'
+hgt_file = '/media/data3/nicway/GEM/archive/SOAP/kananaskis_SHRPD_HRPDS_2.5km_2014_11_UTC_HGT_SFC.nc'
 
 # Dictionary list to change GEM variables names into CHM required names
 var_dic = {'WIND_40maboveground':'u','WDIR_40maboveground':'vw_dir','TMP_2maboveground':'t','DLWRF_surface':'Qli','DSWRF_surface':'Qsi','PRES_surface':'press'}

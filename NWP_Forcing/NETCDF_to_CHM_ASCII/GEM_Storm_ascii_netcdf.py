@@ -18,13 +18,13 @@ time.tzset()
 
 # USER INPUT (change to config file later)
 # 1km
-#ascii_dir='/media/data2/GEM/Nov2014/1km/ascii'
-#netcdf_dir='/media/data2/GEM/Nov2014/1km/netcdf'
-#elev_file='/media/data2/GEM/Nov2014/1km/constant/2014120212_023_MX.csv'
+#ascii_dir='/media/data3/nicway/GEM/Nov2014/1km/ascii'
+#netcdf_dir='/media/data3/nicway/GEM/Nov2014/1km/netcdf'
+#elev_file='/media/data3/nicway/GEM/Nov2014/1km/constant/2014120212_023_MX.csv'
 # 250m
-ascii_dir='/media/data2/GEM/Nov2014/250m/ascii'
-netcdf_dir='/media/data2/GEM/Nov2014/250m/netcdf'
-elev_file='/media/data2/GEM/Nov2014/250m/constant/2014112712_000_MX.csv'
+ascii_dir='/media/data3/nicway/GEM/Nov2014/250m/ascii'
+netcdf_dir='/media/data3/nicway/GEM/Nov2014/250m/netcdf'
+elev_file='/media/data3/nicway/GEM/Nov2014/250m/constant/2014112712_000_MX.csv'
 #
 
 
