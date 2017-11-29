@@ -12,9 +12,9 @@ import seaborn as sns
 plt.rcParams.update({'figure.max_open_warning': 0})
 
 crun = 'GDPS_Current'
-# crun = 'HRDPS_Historical'
+# crun = 'HRPDS_Current'
 
-if crun=='HRDPS_Historical':
+if crun=='HRPDS_Current':
     gem_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps.nc'
     obs_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps_obs.nc'
 elif crun=='GDPS_Current':

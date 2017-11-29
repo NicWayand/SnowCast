@@ -2,14 +2,25 @@
 set -e
 
 # Converts grib2 files to netcdf using a subset of variables
-# Note: source activate ncl
-# Note: Hardcoded extent to subset to below
+# Note: source activate ncl (see ncl_conda_env.txt in this repo for install instructions)
 
 source activate ncl
 
+if [ $# -eq 0 ]
+  then
+    echo "No arguments supplied. One is required [path to HRR data containing grib2 folder]"
+    exit 1
+fi
+
+# Dirs and options
 base_dir=$1 # This should be the dir that contains grib2 and netcdf
 folderin=$base_dir'/grib2' #folder where the grib are
 folderout=$base_dir'/netcdf' #folder to store netcdf
+## Extent to subset to
+# Yakima
+#subROI='-121.48187300000001:-120.336557 46.44775:47.01475'
+# CRHO - SnowCast
+subROI='-116.645:-114.769166666667-114.769166666667 50.66:51.7933333333333'
 
 cd $folderin # cd to that folder
 
@@ -21,7 +32,7 @@ do
     filename=$(basename "$f")
     small_f="subROI_"$filename
     #echo $small_f
-    wgrib2  $f -small_grib -121.48187300000001:-120.336557 46.44775:47.01475 $small_f
+    wgrib2  $f -small_grib $subROI $small_f
     # Clean up
     #rm -f $small_f
 done
@@ -32,7 +43,7 @@ cat subROI_* > ../temp.grib2
 echo "Finished concat"
 
 # to netcdf
-ncl_convert2nc ../temp.grib2 -o "../"$folderout -itime
+ncl_convert2nc ../temp.grib2 -o "../"$folderout -itime # -th 2000
 # Clean up
 rm -f ../temp.grib2
 echo "Finished converting to netcdf"
