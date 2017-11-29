@@ -2,6 +2,7 @@
 # March 10, 2017
 # updated: July 26, 2017
 # updated: October 31, 2017               Happy Halloween
+# Modified by Nic Wayand
 
 """
 Download a single variable from the HRRR archive using cURL.
@@ -139,39 +140,39 @@ def get_single_variable_single_day():
 
     download_HRRR_variable_from_pando(DATE, variable,
                                       hours=range(0, 1),
-                                      fxx=[0],
+                                      fxx=[1],
                                       model='hrrr',
                                       field='sfc',
                                       outdir='/media/data2/HRRR/yakima/grib2/')
 
 
-def get_single_variable_multiple_days():
+def get_single_variable_multiple_days(sDATE,eDATE,variable,outdir):
     # Download single variable from a date range
-    sDATE = date(2017, 3, 10)   # Start date
-    eDATE = date(2017, 3, 13)   # End date (exclusive)
+    #sDATE = date(2017, 3, 10)   # Start date
+    #eDATE = date(2017, 3, 13)   # End date (exclusive)
     days = (eDATE-sDATE).days
     DATES = [sDATE + timedelta(days=d) for d in range(days)]
 
-    variable = 'TMP:2 m'       # Must be part of a line in the .idx file
+    #variable = 'TMP:2 m'       # Must be part of a line in the .idx file
 
     for DATE in DATES:
         download_HRRR_variable_from_pando(DATE, variable,
                                           hours=range(0, 24),
-                                          fxx=[0],
+                                          fxx=[1],
                                           model='hrrr',
                                           field='sfc',
-                                          outdir='./')
+                                          outdir=outdir)
 
 
-def get_multiple_variables_multiple_days():
+def get_multiple_variables_multiple_days(sDATE,eDATE,variables,outdir):
     # Download multiple variables from date range
-    sDATE = date(2016, 8, 1)   # Start date
-    eDATE = date(2016, 8, 28)   # End date (exclusive)
+    #sDATE = date(2016, 8, 1)   # Start date
+    #eDATE = date(2016, 8, 28)   # End date (exclusive)
     days = (eDATE-sDATE).days
     DATES = [sDATE + timedelta(days=d) for d in range(days)]
 
     # Variable strings must be part of a line in the .idx file
-    variables = ['TMP:2 m', 'RH:2 m', 'UGRD:10 m', 'VGRD:10 m', 'PRATE', 'CPOFP', 'DSWRF', 'DLWRF', 'PRES:surface','WEASD', 'SNOD','APCP:surface']
+    #variables = ['TMP:2 m', 'RH:2 m', 'UGRD:10 m', 'VGRD:10 m', 'PRATE', 'CPOFP', 'DSWRF', 'DLWRF', 'PRES:surface','WEASD', 'SNOD','APCP:surface']
     #variables = ['TMP:2 m', 'RH:2 m', 'UGRD:10 m', 'VGRD:10 m', 'PRATE', 'CPOFP', 'DSWRF', 'DLWRF', 'PRES:surface']
     #variables = ['WEASD', 'SNOD']
     #variables = ['APCP:surface']
@@ -183,7 +184,7 @@ def get_multiple_variables_multiple_days():
                                               fxx=[1],
                                               model='hrrr',
                                               field='sfc',
-                                              outdir='/media/data3/nicway/HRRR/SnowCast/grib2/')
+                                              outdir=outdir)
                                               #outdir='/media/data3/HRRR/yakima/grib2/')
 
 if __name__=='__main__':
