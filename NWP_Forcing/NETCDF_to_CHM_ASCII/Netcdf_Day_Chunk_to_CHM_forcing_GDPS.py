@@ -81,7 +81,7 @@ for cd in all_files:
     # So Start with hour 9
     # If so grab 48hr forecast
     if (cd==all_files[-1]):
-        ds = ds.isel(datetime=np.arange(2,48))
+        ds = ds.isel(datetime=np.arange(2,48)) # 80 for 10day
     # Otherwise only grab the 24 hours
     else:
         ds = ds.isel(datetime=np.arange(2,10))

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+#set -e
 
 # Converts grib2 files to netcdf using a subset of variables
 # Note: source activate ncl (see ncl_conda_env.txt in this repo for install instructions)
@@ -22,6 +22,10 @@ folderout=$base_dir'/netcdf' #folder to store netcdf
 # CRHO - SnowCast
 subROI='-116.645:-114.769166666667-114.769166666667 50.66:51.7933333333333'
 
+# Keep list of error files
+errFile=$base_dir'/grib2_error_files.txt'
+rm -f $errFile # Remove it if it already exists
+
 cd $folderin # cd to that folder
 
 #now loop through all the grib files in there
@@ -33,19 +37,28 @@ do
     small_f="subROI_"$filename
     #echo $small_f
     wgrib2  $f -small_grib $subROI $small_f
+    # Test if it failed
+    response=$?
+    if   [ $response -ne 0 ]; then
+        echo "wgrib2 failed for some reason"
+        echo $f >> $errFile
+        # Remove bad subROI file if it exists
+        rm -f $small_f
+    fi
     # Clean up
     #rm -f $small_f
 done
 
 # Concatenate
 echo "Starting concat"
-cat subROI_* > ../temp.grib2
+#cat subROI_* > ../HRRR.grib2 # This fails for large number of files, hence the line below.
+find -type f -name  'subROI_*' | xargs -n 32 -P 8 cat >> ../HRRR.grib2
 echo "Finished concat"
 
 # to netcdf
-ncl_convert2nc ../temp.grib2 -o "../"$folderout -itime # -th 2000
+ncl_convert2nc ../HRRR.grib2 -o $folderout -itime # -th 2000
 # Clean up
-rm -f ../temp.grib2
+rm -f ../HRRR.grib2
 echo "Finished converting to netcdf"
 
 

@@ -48,9 +48,11 @@ if not os.path.isdir(fig_dir):
 if chm_run_dir=='forecast_CRHO_spinup':
     gem_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps.nc'
     obs_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps_obs.nc'
+    h_dt = 1 # Hours per gem tim step
 elif chm_run_dir=='GDPS_Current':
     gem_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/gdps.nc'
     obs_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/gdps_obs.nc'
+    h_dt = 3 # Hours per gem tim step
 else:
     sys.exit('Run name not found.')    
 
@@ -81,11 +83,11 @@ if trim_extent:
 
 ds_bias = (gem_mrg - obs_mrg).mean(dim='initDate')
 ds_bias['p'] = (gem_mrg.p - obs_mrg.p).sum(dim='initDate')
-print(ds_bias)
+# print(ds_bias)
 
 se = (gem_mrg - obs_mrg)**2.0
 ds_rmse = xr.ufuncs.sqrt(se.mean(dim='initDate'))
-print(ds_rmse)
+# print(ds_rmse)
 
 # Plot
 
@@ -102,10 +104,13 @@ Vars_to_plot = ['t','rh','U_2m_above_srf','p','ilwr','iswr']
 f1.set_size_inches(16, 8)
 ax1 = ax1.flatten()
 for i,cvar in enumerate(Vars_to_plot):
-    ax1[i].plot(ds_bias.forecastHour, ds_bias[cvar].T ,'-k',)
-    ax1[i].plot(ds_bias.forecastHour, ds_bias[cvar].mean(dim='station'), linewidth=3, color='r')
+    ax1[i].plot(ds_bias.forecastHour*h_dt, ds_bias[cvar].T ,'-k',)
+    ax1[i].plot(ds_bias.forecastHour*h_dt, ds_bias[cvar].mean(dim='station'), linewidth=3, color='r')
     ax1[i].set_title(plot_key[cvar])
     ax1[i].set_ylabel(ylabel_unit[cvar])
+    if i==4:
+        ax1[i].set_xlabel('Forecast hour')
+f1.tight_layout()
 # Save Figure
 file_out = os.path.join(fig_dir, 'Bias.png')
 chmF.save_figure(f1,file_out,fig_res)
@@ -114,10 +119,13 @@ chmF.save_figure(f1,file_out,fig_res)
 f2.set_size_inches(16, 8)
 ax1 = ax1.flatten()
 for i,cvar in enumerate(Vars_to_plot):
-    ax1[i].plot(ds_rmse.forecastHour, ds_rmse[cvar].T ,'-k',)
-    ax1[i].plot(ds_rmse.forecastHour, ds_rmse[cvar].mean(dim='station'), linewidth=3, color='r')
+    ax1[i].plot(ds_rmse.forecastHour*h_dt, ds_rmse[cvar].T ,'-k',)
+    ax1[i].plot(ds_rmse.forecastHour*h_dt, ds_rmse[cvar].mean(dim='station'), linewidth=3, color='r')
     ax1[i].set_title(plot_key[cvar])
     ax1[i].set_ylabel(ylabel_unit[cvar])
+    if i==4:
+        ax1[i].set_xlabel('Forecast hour')
+f2.tight_layout()
 # Save Figure
 file_out = os.path.join(fig_dir, 'RMSE.png')
 chmF.save_figure(f2, file_out, fig_res)
@@ -126,10 +134,13 @@ chmF.save_figure(f2, file_out, fig_res)
 f3.set_size_inches(16, 8)
 ax1 = ax1.flatten()
 for i, cvar in enumerate(Vars_to_plot):
-    ax1[i].plot(gem_mrg.forecastHour, gem_mrg[cvar].mean(dim='station').T, '-r', )
-    ax1[i].plot(obs_mrg.forecastHour, obs_mrg[cvar].mean(dim='station').T, '-b')
+    ax1[i].plot(gem_mrg.forecastHour*h_dt, gem_mrg[cvar].mean(dim='station').T, '-r', )
+    ax1[i].plot(obs_mrg.forecastHour*h_dt, obs_mrg[cvar].mean(dim='station').T, '-b')
     ax1[i].set_title(plot_key[cvar])
     ax1[i].set_ylabel(ylabel_unit[cvar])
+    if i==4:
+        ax1[i].set_xlabel('Forecast hour')
+f3.tight_layout()
 # Save Figure
 file_out = os.path.join(fig_dir, 'Met.png')
 chmF.save_figure(f3,file_out,fig_res)
