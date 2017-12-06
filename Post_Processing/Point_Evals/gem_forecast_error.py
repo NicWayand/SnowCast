@@ -54,11 +54,11 @@ HRDPS = False
 GDPS = True
 # GEM data
 if HRDPS:
-    gem_nc_dir = r'/media/data2/GEM/west/netcdf_archive'
+    gem_nc_dir = r'/media/data3/nicway/GEM/west/netcdf_archive'
     gem_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps.nc'
     obs_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/hrdps_obs.nc'
 elif GDPS:
-    gem_nc_dir = r'/media/data2/GEM/GDPS/netcdf_archive'
+    gem_nc_dir = r'/media/data3/nicway/GEM/GDPS/netcdf_archive'
     gem_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/gdps.nc'
     obs_file_out = r'/media/data3/nicway/SnowCast/GEM_eval/gdps_obs.nc'
 

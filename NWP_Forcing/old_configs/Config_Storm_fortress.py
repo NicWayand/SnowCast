@@ -1,13 +1,13 @@
 ################################################
 # Paths
 ################################################
-#netcdf_file  = '/media/data2/GEM/Nov2014/1km/netcdf/GEM_1km_Nov_2014_Storm.nc'
-netcdf_file  = '/media/data2/GEM/Nov2014/250m/netcdf/GEM_250m_Nov_2014_Storm.nc'
+#netcdf_file  = '/media/data3/nicway/GEM/Nov2014/1km/netcdf/GEM_1km_Nov_2014_Storm.nc'
+netcdf_file  = '/media/data3/nicway/GEM/Nov2014/250m/netcdf/GEM_250m_Nov_2014_Storm.nc'
 
 
 # Dir where output ascii files should go
-#ascii_dir    = '/media/data2/GEM/Nov2014/1km/chm'
-ascii_dir    = '/media/data2/GEM/Nov2014/250m/chm'
+#ascii_dir    = '/media/data3/nicway/GEM/Nov2014/1km/chm'
+ascii_dir    = '/media/data3/nicway/GEM/Nov2014/250m/chm'
 
 
 #########################################

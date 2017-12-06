@@ -12,6 +12,8 @@ git_dir=/home/nwayand/SnowCast/
 sub_dir=$git_dir/In_Situ_Data/
 # Python executable
 python_bin=/home/nwayand/custom/anaconda2/bin/python
+# R executable
+r_bin=/usr/bin/Rscript
 # Options
 updateHist=true # Updates historical data if true
 ## End USER CONFIG ##
@@ -37,6 +39,8 @@ echo Updating Recent data
 $python_bin $sub_dir$NRT_dir"NRT_AB_SWE_SD_to_netcdf.py"  $git_dir$Configfile &
 $python_bin $sub_dir$NRT_dir"NRT_BC_Pillows_to_netcdf.py"  $git_dir$Configfile &
 $python_bin $sub_dir$NRT_dir"NRT_recent_AB_Pillows_to_netcdf.py"  $git_dir$Configfile &
+$r_bin $sub_dir$NRT_dir"Download_Wiksi_Data_to_csv.R"  # Important this finished before next line executes
+$python_bin $sub_dir$NRT_dir"Merge_Wiski_ascii_to_netcdf.py" $git_dir$Configfile &
 
 # Importing Historical data (static)
 # These execute in parallel

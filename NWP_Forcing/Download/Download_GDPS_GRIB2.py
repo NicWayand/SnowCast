@@ -45,6 +45,7 @@ YYYYMMDDHH = time.strftime("%Y%m%d")+Init_H
 base_url = 'http://dd.weather.gc.ca/model_gem_global'
 filetype = 'grib2'
 lat_lon = 'lat_lon'
+#Forc_H   = np.arange(3, 241, 3)
 Forc_H   = np.arange(3, 145, 3)
 sep      = '/'
 office     = 'CMC'
@@ -74,10 +75,53 @@ for c_Forc_H in Forc_H:
         print(cfile)
         print(cpath+cfile)
         print(" ")
-        try:
-            urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
-        except:
-            send_mail.send('GDPS download failed.') #+cpath+cfile))            
+
+        import urllib2
+        import socket
+
+        # class MyException(Exception):
+        #     pass
+
+        tries_left = 5
+        while tries_left > 0:
+            try:
+                request = urllib2.urlopen(cpath + cfile, timeout=30)
+                # urllib.urlretrieve(cpath + cfile, os.path.join(download_dir, cfile))
+                #time.sleep(0.1)
+            except:
+                print('Error opening url file ' + cfile + '. Remaining tries=' + str(tries_left))
+                tries_left = tries_left - 1
+                # If we have already tried 3 times, then call for help
+                if tries_left == 0:
+                    send_mail.send(str('GDPS download failed. ' + cpath + cfile))
+                continue
+            else:
+                with open(os.path.join(download_dir, cfile), 'wb') as f:
+                    try:
+                        f.write(request.read())
+                    except:
+                        tries_left = tries_left - 1
+                        print("Error downloading file")
+                        continue
+                    else:
+                        break
+
+        # tries_left = 3
+        # while tries_left>0:
+        #     try:
+        #         urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
+        #         time.sleep(0.1)
+        #     except:
+        #         print('Error downloading file '+cpath+cfile+ '. Remaining tries='+str(tries_left))
+        #         tries_left = tries_left - 1
+        #         # If we have already tried 3 times, then call for help
+        #         if tries_left==0:
+        #             send_mail.send(str('GDPS download failed. '+cpath+cfile))
+        #         continue
+        #     else:
+        #         break
+
+
         #urls.append(cpath+cfile)
 
 # download files

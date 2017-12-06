@@ -25,8 +25,9 @@ BC_CWY = os.path.join(data_dir, 'BC_NRT', 'netcdf', 'BC_NRT.nc') # Current Water
 BC_HIST = os.path.join(data_dir, 'BC_HIST', 'netcdf', 'BC_HIST.nc')
 ABE_AGG_HIST = os.path.join(data_dir, 'ABE_AGG_HIST', 'netcdf', 'ABE_AGG_HIST.nc') # MST
 CRHO = os.path.join(data_dir, 'CRHO_HIST', 'netcdf', 'CRHO_1hour.nc') # MST
+CRHO_NRT = os.path.join(data_dir, 'CRHO_NRT', 'netcdf', 'CRHO_NRT.nc') # MST
 
-CRHO_time_zone = 7 # MST to UTC
+CRHO_time_zone = 7 # (HIST AND NRT) MST to UTC
 ABE_AGG_HIST_time_zone = 7 # MST to UTC
 
 merged_dir = os.path.join(data_dir,'merged')
@@ -41,12 +42,16 @@ ds_AB_POR = xr.open_dataset(AB_POR)
 ds_BC_CWR = xr.open_dataset(BC_CWY)
 ds_BC_HIST = xr.open_dataset(BC_HIST)
 ds_CRHO = xr.open_dataset(CRHO)
+ds_CRHO_NRT = xr.open_dataset(CRHO_NRT)
 ds_ABE_AGG = xr.open_dataset(ABE_AGG_HIST)
 
 # Make all datasets same time zone and variable names
 # All to MST
 ds_CRHO['time_hrly'] = ds_CRHO['time_hrly'] + np.timedelta64(CRHO_time_zone,'h')
 ds_CRHO.rename({'station':'staID','time_hrly':'Time_UTC'}, inplace=True);
+
+ds_CRHO_NRT['Time_MST'] = ds_CRHO_NRT['Time_MST'] + np.timedelta64(CRHO_time_zone,'h')
+ds_CRHO_NRT.rename({'station':'staID','Time_MST':'Time_UTC'}, inplace=True);
 
 ds_ABE_AGG['Time_MST'] = ds_ABE_AGG['Time_MST'] + np.timedelta64(ABE_AGG_HIST_time_zone,'h')
 ds_ABE_AGG.rename({'Time_MST':'Time_UTC'}, inplace=True);
@@ -72,6 +77,7 @@ ds_AB_POR.reset_coords(orig_coords, inplace=True);
 ds_BC_CWR.reset_coords(orig_coords, inplace=True);
 ds_BC_HIST.reset_coords(orig_coords, inplace=True);
 ds_CRHO.reset_coords(orig_coords, inplace=True);
+ds_CRHO_NRT.reset_coords(orig_coords, inplace=True);
 ds_ABE_AGG.reset_coords(orig_coords, inplace=True);
 
 # Merge AB data together (hist to midnight, and last few days)
@@ -99,9 +105,13 @@ ds_BC_AB['SnowWaterEquivelentA'] = ds_BC_AB.SnowWaterEquivelentA / 1000 # mm to 
 ds_BC_AB['CummulativePrecipitationA'] = ds_BC_AB.CummulativePrecipitationA / 1000 # mm to m
 ds_BC_AB['SnowDepthA'] = ds_BC_AB.SnowDepthA / 100 # cm to m
 
+# Merge CRHO HIST and CRHO NRT (HIST has been more rigoursly QC'ed to use it first)
+ds_CRHO_all = ds_CRHO.combine_first(ds_CRHO_NRT)
+
 # Merge CRHO with other AB and BC data
-ds_merged = xr.merge([ds_CRHO,ds_BC_AB])
+ds_merged = xr.merge([ds_CRHO_all,ds_BC_AB])
 ds_CRHO = None
+ds_CRHO_NRT = None
 ds_BC_AB = None
 
 # Rename ds_ABE_AGG naming to match CRHO name format

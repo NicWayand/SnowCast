@@ -16,6 +16,7 @@ from vtk.util import numpy_support as VN
 import matplotlib.tri as tri
 import vtu_functions as vfunc
 import cartopy.crs as ccrs
+import cartopy.io.shapereader as shpreader
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import datetime
 import seaborn as sns
@@ -76,6 +77,13 @@ OBS_data = xr.open_dataset(file_in, engine='netcdf4') #.load()
 # Rename obs variable names to model variable names
 OBS_data.rename(vars_all, inplace=True);
 
+p_file = os.path.join(data_dir, 'Static_data', 'CAN_adm1.shp')
+# Provences
+p_sh = list(shpreader.Reader(p_file).geometries())
+# Cities/Towns to plot
+t_lat = [51.089682, 51.177924, 51.426574, 51.268964, 51.394761]
+t_lon = [-115.360909, -115.570507, -116.18042, -115.919495, -116.49353]
+t_name = ['Canmore','Banff','Lake Louise','Castle Junction','Field']
 
 # Make fig dir
 if not os.path.isdir(fig_dir):
@@ -135,6 +143,14 @@ def plot_variable(tri_var, var2plot, time_start, c_timestamp,
                         vmin=var_vmin * scale_factor[var2plot],
                         vmax=var_vmax * scale_factor[var2plot],
                         edgecolors='k', linewidths=2)
+
+    # Add landmarks
+    ax.add_geometries(p_sh, ccrs.PlateCarree(),
+                       edgecolor='black', facecolor='none', alpha=0.5) #AB/BC boarder
+    # Town/Cites
+    ax.scatter(t_lon, t_lat, c='k', s=300, marker='*')
+    for i, txt in enumerate(t_name):
+        ax.annotate(txt, (t_lon[i]+0.01, t_lat[i]+0.01), fontsize=20)
 
     # Add colorbar
     b1 = fig.colorbar(p1)
@@ -221,7 +237,7 @@ title_dict = {'snowdepthavg':'Snowdepth','swe':'SWE','p_snow':'Snowfall','p_rain
 cmap_dict = {'snowdepthavg':mpl.colors.ListedColormap(sns.color_palette("Blues", 12)),
              'p_rain':mpl.colors.ListedColormap(sns.color_palette("Reds", 12)),
              'p_snow':mpl.colors.ListedColormap(sns.color_palette("Blues", 12)),
-             'swe':mpl.colors.ListedColormap(sns.color_palette("Reds", 12)),
+             'swe':mpl.colors.ListedColormap(sns.color_palette("Greys", 12)),
              'snowdepthavg_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12)),
              'swe_diff': mpl.colors.ListedColormap(sns.color_palette("RdBu", 12))}
 var_min_delta = {'snowdepthavg':0.1,'swe':0.01, 'p_snow':0.01} # Min max value for plotting change (m)

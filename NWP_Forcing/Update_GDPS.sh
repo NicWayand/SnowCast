@@ -24,7 +24,7 @@ echo Downloading GEM
 
 # Subset grib2 files (global) to Canada
 echo Subsetting GDPS grib2 files
-/home/nwayand/SnowCast/NWP_Forcing/Util/sub_set_grib2_files.sh /media/data2/GEM/GDPS/grib2_current
+/home/nwayand/SnowCast/NWP_Forcing/Util/sub_set_grib2_files.sh /media/data3/nicway/GEM/GDPS/grib2_current
 
 # Format grib2 to netcdf
 echo Formating grib2 to netcdf

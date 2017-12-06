@@ -2,11 +2,13 @@
 # Paths
 ################################################
 
+download_dir = '/media/data3/nicway/HRRR/SnowCast/grib2'
+
 # Dir where output netcdf files go
-netcdf_dir  = '/media/data2/HRRR/yakima/netcdf'
+#netcdf_dir  = '/media/data2/HRRR/yakima/netcdf'
 
 # Dir where output ascii files should go
-ascii_dir    = '/media/data1/HRRR/yakima/ascii'
+#ascii_dir    = '/media/data1/HRRR/yakima/ascii'
 
 # File that contains the elevation (height)
 hgt_file = '/media/data2/HRRR/yakima/HGT/subROI_HRRRfromPando_20170310_h00_f00_HGT_surface.nc'

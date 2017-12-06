@@ -2,13 +2,13 @@
 # Paths
 ################################################
 # Dir to put GEM grib2 files
-download_dir = '/media/data2/GEM/west/grib2_current'
+download_dir = '/media/data3/nicway/GEM/west/grib2_current'
 
 # Dir where output netcdf files go
-netcdf_dir  = '/media/data2/GEM/west/netcdf_archive'
+netcdf_dir  = '/media/data3/nicway/GEM/west/netcdf_archive'
 
 # Dir where output ascii files should go
-ascii_dir    = '/media/data2/GEM/west/CHM_archive_append'
+ascii_dir    = '/media/data3/nicway/GEM/west/CHM_archive_append'
 
 ################################################
 # Configuration for Download_HRDPS_GRIB2.py

@@ -33,7 +33,7 @@ configfile = sys.argv[-1]
 # Load in configuration file as module
 X = imp.load_source('',configfile)
 
-GDPS_output_dt = 3 # Hours (current from 0-144 hours)
+output_dt = 1 # Hours (current from 0-144 hours)
 
 # Assign to local variables
 netcdf_dir = X.netcdf_dir
@@ -41,27 +41,25 @@ ascii_dir   = X.ascii_dir
 Forcing_config_file = X.Forcing_config_file
 lat_r = X.lat_r
 lon_r = X.lon_r
+var_dic = X.var_dic
 local_time_offset = X.local_time_offset
 coordsystem = X.coordsystem
 if coordsystem=='pro':
     utm_zone = X.utm_zone
 
-
 # Move to input
 os.chdir(netcdf_dir)
 
 # Get all file names
-all_files =  sorted(glob.glob('*.nc'))
-hgt_file = r'/media/data3/nicway/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
-ds_hgt_in = xr.open_dataset(hgt_file).isel(time=0).drop('time')
-
+all_files =  sorted(glob.glob('GEM_rockies_*_00_24.nc'))
+#hgt_file = r'/media/data3/nicway/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
+#ds_hgt_in = xr.open_dataset(hgt_file).isel(time=0).drop('time')
 
 first_day = True # Flag to write header to csv files if first month
 
 # Move to ascii dir
 if not os.path.isdir(ascii_dir):
     os.mkdir(ascii_dir)
-
 
 for cd in all_files:
     flag1 = False # flag to check we are not missing a forecast
@@ -70,32 +68,65 @@ for cd in all_files:
     # Load current file
     os.chdir(netcdf_dir)
     ds = xr.open_dataset(cd,engine='netcdf4')
-    # Add height in with ds' lat and lon (because of round of diff with how
-    # hgt was created (wgrib2 -netcdf) vs. ds (pynio in python)
-    ds['HGT_surface'] = xr.DataArray(ds_hgt_in.HGT_surface.values,
-              dims=('lat_0','lon_0'), coords={'lat_0':ds.lat_0, 'lon_0':ds.lon_0})
 
+    # Rename variables
+    ds.rename(var_dic, inplace=True)
 
     # Select only times we want
-    # Allow 6 hours of "spin up"
-    # So Start with hour 9
-    # If so grab 48hr forecast
-    if (cd==all_files[-1]):
-        ds = ds.isel(datetime=np.arange(2,48)) # 80 for 10day
-    # Otherwise only grab the 24 hours
-    else:
-        ds = ds.isel(datetime=np.arange(2,10))
+    ds = ds.isel(time=np.arange(6,18))
 
     # Apply a bias correction (optional)
     #ds['Qli'] = ds.Qli + 30
     #print "Warning, applying +30 ilwr bias correctoin"
+
+    print 'Converting units to CHM units'
+    ##### Convert units to CHM requirements
+
+    # longitude
+    ds['lon_0'] =  ds.lon_0 - 360
+
+    # replace x,y (in distance (m)) to indices (wgrib does this for some reason!)
+    ds['x']=np.arange(0,ds.x.size)
+    ds['y']=np.arange(0,ds.y.size)
+
+    # Apply a bias correction (optional)
+    #ds['Qli'] = ds.Qli + 30
+    #print "Warning, applying +30 ilwr bias correctoin"
+
+    # Drop sigma dims
+    ds = ds.isel(sigma=0).drop('sigma')
+    # ds['t'] = ds.t.isel(sigma=0).drop('sigma')
+    # ds['rh'] = ds.rh.isel(sigma=0).drop('sigma')
+    # ds['GZ'] = ds.GZ.isel(sigma=0).drop('sigma')
+    # ds['u'] = ds.u.isel(sigma=0).drop('sigma')
+    # ds['vw_dir'] = ds.vw_dir.isel(sigma=0).drop('sigma')
+
+    # Relative humidity (Based on Tetens' formula (1930))
+    ds['rh'] = ds.rh*100 # fraction to %
+
+    # Pressure (after RH calcs)
+    ds['press'] = ds['press'] / 100 # Pa to hPa
+
+    # Precipitaiton (liquid and solid) accumulated (m) to incremental (mm)
+    ds_p = ds.PR.diff(dim='time')
+    # Setp values just below zero to zero
+    ds_p.values[ds_p.values<0] = 0
+    # First value is unknown (downside of saving as accum...) so we set it to -9999
+    ds['p'] = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
+
+    # Geopotentila to height
+    ds['HGT_surface'] = ds.GZ*9.81
+
+    # Rename time
+    ds.rename({'time':'datetime'},inplace=True)
+
 
     ## Adjust to local time zone (i.e. from UTC to MST, local_time_offset should = -7)
     #ds['datetime'] = pd.to_datetime(ds.datetime.values) + datetime.timedelta(hours=local_time_offset)
 
     # Shift time stamp from END (GEM format)
     # to START (CHM format)
-    ds['datetime'] = pd.to_datetime(ds.datetime.values) - datetime.timedelta(hours=GDPS_output_dt)
+    ds['datetime'] = pd.to_datetime(ds.datetime.values) - datetime.timedelta(hours=output_dt)
 
     # Move to ascii dir
     os.chdir(ascii_dir)
@@ -111,9 +142,11 @@ for cd in all_files:
     meta = {}
 
     # Loop through each point within our lat long box
-    for i in range(ds.coords['lon_0'].size):
-        for j in range(ds.coords['lat_0'].size):
-            sub_grid = ds.isel(lon_0=i, lat_0=j)
+    for i in range(ds.coords['x'].size):
+        for j in range(ds.coords['y'].size):
+            sub_grid = ds.isel(x=i, y=j)
+            if sub_grid.t.notnull().sum()==0:
+                continue
             df = sub_grid.to_dataframe()
 
             def drop_possible_var(var_in,df):
@@ -144,7 +177,7 @@ for cd in all_files:
                 meta['point_'+str(i)+'_'+str(j)] = {'file':ascii_dir+'/point_'+str(i)+'_'+str(j)+'.chm',
                 "longitude":coords[0],
                 "latitude":coords[1],
-                "elevation":float(sub_grid.HGT_surface.values),
+                "elevation":float(sub_grid.HGT_surface.values[0]),
                 "filter": {
                 "scale_wind_speed": {
                 "variable": "u",
@@ -156,7 +189,7 @@ for cd in all_files:
                 if not flag1: # if we haven't checked yet (first station)
                     # Check last time steps line up
                     old_df = pd.read_csv('point_'+str(i)+'_'+str(j)+'.chm',sep="\t",parse_dates=True)
-                    wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=GDPS_output_dt)
+                    wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=output_dt)
                     if not (wantTime==pd.to_datetime(df.index[0])):
                         print 'Missing time steps for file'
                         print 'Wanted ' + str(wantTime)
