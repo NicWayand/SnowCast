@@ -58,7 +58,7 @@ all_var = list(set(all_var))
 ds_list = []
 for csta in all_sta:
 
-    da_list = [] # list to store all variables for this station
+    da_list = [] # list to store all variables for this station_w
 
     for cvar in all_var:
 
@@ -87,7 +87,7 @@ for csta in all_sta:
 
     # Merge into dataset
     ds = xr.merge(da_list)
-    ds.coords['station'] = csta
+    ds.coords['station_w'] = csta
 
     # Fill in Dummy variables
     for tvar in all_var:
@@ -100,35 +100,66 @@ for csta in all_sta:
     ds_list.append(ds)
 
 # Concat by stations
-ds_all = xr.concat(ds_list,dim='station')
+ds_all = xr.concat(ds_list,dim='station_w')
+
+# Add metadata (steal from CRHO HIST file
+
+# Dictionary to go from wiski station name to Snowcast "station_name"
+wiski_2_snowcast = {'Fortress_Ridge':"Fortress Ridge",'Vista_View':"Vista View",
+                    "Bonsai_Meteorological":"Bonsai","Burstall_Pass":"Burstall Pass",
+                    "Centennial_Ridge":"Centennial Ridge",
+                    "Canadian_Ridge":"Canadian Ridge", "Fortress_Ledge":"Fortress Ledge",
+                    "Fortress_Ridge_South_Meteorological":"Fortress Ridge South",
+                    "Fisera_Ridge":"Fisera Ridge","Helen":"Helen Lake","Hay_Meadow":"Hay Meadows",
+                    "Peyto_Hut_Main":"Peyto","Upper_Clearing":"Upper Clearning",
+                    "Canadian_Ridge_North":"Canadian Ridge North"}
+ds_all['station_name'] = [wiski_2_snowcast[x] for x in ds_all.station_w.values]
+
+# Load in Hist to "steal" metadata
+CRHO = os.path.join(data_dir, 'CRHO_HIST', 'netcdf', 'CRHO_1hour.nc') # MST
+ds_CRHO = xr.open_dataset(CRHO)
+ds_CRHO = ds_CRHO['AirtemperatureA']
+
+# Add station (staID)
+ds_all['station'] = [ds_CRHO.where(ds_CRHO.station_name==x,drop=True).station.item() for x in ds_all['station_name']]
+# Set index to be station
+ds_all['station_w'] = ds_all['station']
+ds_all = ds_all.drop(['station'])
+ds_all.rename({'station_w':'station'},inplace=True)
+# Add info
+ds_all.coords['Lat'] = xr.DataArray([ds_CRHO.where(ds_CRHO.station_name==x,drop=True).Lat.item() for x in ds_all['station_name']],
+                             coords={'station':ds_all.station}, dims=('station'))
+ds_all.coords['Lon'] = xr.DataArray([ds_CRHO.where(ds_CRHO.station_name==x,drop=True).Lon.item() for x in ds_all['station_name']],
+                             coords={'station':ds_all.station}, dims=('station'))
+ds_all.coords['Elevation'] = xr.DataArray([ds_CRHO.where(ds_CRHO.station_name==x,drop=True).Elevation.item() for x in ds_all['station_name']],
+                             coords={'station':ds_all.station}, dims=('station'))
+ds_all.coords['network'] = xr.DataArray([ds_CRHO.where(ds_CRHO.station_name==x,drop=True).network.item() for x in ds_all['station_name']],
+                             coords={'station':ds_all.station}, dims=('station'))
+ds_all.coords['station_name'] = xr.DataArray([ds_CRHO.where(ds_CRHO.station_name==x,drop=True).station_name.item() for x in ds_all['station_name']],
+                             coords={'station':ds_all.station}, dims=('station'))
+# Fix variable names
+w_2_s_vars = {'TEMPERATURE_AIR':'AirtemperatureA',
+              'AccumulatedPrecip':'CummulativePrecipitationA',
+             'IntervalPrecip':'IncrementalPrecipitationA' ,
+             'IncomingSWRad':'DownwardSolarRadiation',
+             'WindDir':'WindDirectionatA',
+             'WindSpeed':'ScalarWindSpeedA',
+             'SnowDepth':'SnowDepthA',
+             'RelHum':'AirMoistureContentA',
+             'OutgoingSWRad':'UpwardSolarRadiation',
+             'IncomingLWRad':'DownwardTerrestrialRad',
+             'OutgoingLWRad':'UpwardTerrestrialRad',
+             'SurfTemp':'tsrf'}
+ds_all.rename(w_2_s_vars, inplace=True)
 
 # To netcdf
 ds_all.to_netcdf(netcdf_file_out)
-#
+
+# # Test plot
 # import matplotlib.pyplot as plt
 # for cvar in ds_all.data_vars:
 #     plt.figure()
-#     for csta in ds_all.station:
-#         if ds_all[cvar].sel(station=csta).notnull().sum()>0:
-#             plt.plot(ds_all.Time_MST, ds_all[cvar].sel(station=csta))
-
-
-
-    # # Rename columns
-    # df = df.rename(columns = AB_2_BC_var_dict)
-    #
-    # # df to ds
-    # ds_c = xr.Dataset.from_dataframe(df)
-    # # Add as coord
-    # ds_c['staID'] = csta
-    # ds_c.set_coords('staID',inplace=True)
-    #
-    # # Store as dict (if we have any data)
-    # if ds_c.Time_MST.size>0:
-    #     ds_list.append(ds_c)
-#                 sta_list_used.append(csta)
-#
-# # Concat all stations for one variable into netcdf
-# ds_var = xr.concat(ds_list,'staID')
-# ds_var_list.append(ds_var)
+#     for csta in ds_all.station_w:
+#         if ds_all[cvar].sel(station_w=csta).notnull().sum()>0:
+#             plt.plot(ds_all.Time_MST, ds_all[cvar].sel(station_w=csta))
 

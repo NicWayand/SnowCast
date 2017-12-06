@@ -82,7 +82,7 @@ for c_Forc_H in Forc_H:
         # class MyException(Exception):
         #     pass
 
-        tries_left = 3
+        tries_left = 5
         while tries_left > 0:
             try:
                 request = urllib2.urlopen(cpath + cfile, timeout=30)
@@ -100,8 +100,11 @@ for c_Forc_H in Forc_H:
                     try:
                         f.write(request.read())
                     except:
+                        tries_left = tries_left - 1
                         print("Error downloading file")
-                break
+                        continue
+                    else:
+                        break
 
         # tries_left = 3
         # while tries_left>0:

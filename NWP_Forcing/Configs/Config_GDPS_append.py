@@ -2,8 +2,8 @@
 # Paths
 ################################################
 # Dir to put GEM grib2 files
-# download_dir = '/media/data3/nicway/GEM/GDPS/grib2_current'
-download_dir = '/media/data3/nicway/GEM/GDPS/grib2_test'
+download_dir = '/media/data3/nicway/GEM/GDPS/grib2_current'
+# download_dir = '/media/data3/nicway/GEM/GDPS/grib2_test'
 
 # Dir where output netcdf files go
 netcdf_dir  = '/media/data3/nicway/GEM/GDPS/netcdf_archive'

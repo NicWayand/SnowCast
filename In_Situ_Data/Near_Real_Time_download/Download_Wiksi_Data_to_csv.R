@@ -1,14 +1,14 @@
 library(WISKIr)
 
-X <- findWISKIstations('*')
-write.csv(X$station_name, 'wiski_stanames.csv')
+#X <- findWISKIstations('*')
+#write.csv(X$station_name, 'wiski_stanames.csv')
 
 data_dir <- '/media/data2/SnowCast_station_data/CRHO_NRT/current/'
 
-# bad boys
+# Stations not currently working
 # "Level Forest" "PowerLine" Upper Forest Bow Hut
 
-stations <- c('Fortress Ridge','Vista View',"Bonsai Meteorological","Burstall Pass", "Centennial Ridge",
+stations <- c("Bonsai Meteorological","Burstall Pass", "Centennial Ridge",
     "Canadian Ridge", "Fortress Ledge",
     "Fortress Ridge", "Fortress Ridge South Meteorological", "Fisera Ridge", "Helen",
     "Hay Meadow", "Peyto Hut Main",
