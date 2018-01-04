@@ -1,19 +1,18 @@
 SnowCast Documentation
 ====================================
 
-Another header
-===============
+Now- and Fore-casts of snow conditions over the Canadian Rockies.
+=================================================================
 
-Here is some text::
-    print 'hello'
-    >> hello
-
-Guide
-*****
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-
+  
+   why-snowcast
+   station-data
+   weather-forecasts
+   remote-sensing
+   snow-modeling
+   model-evaluations 
    licence
    help
 
