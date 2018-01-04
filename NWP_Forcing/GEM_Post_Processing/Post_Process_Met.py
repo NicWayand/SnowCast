@@ -74,10 +74,11 @@ df_stats = pd.DataFrame(index=gem_files.keys(),
 # Loop through each GEM file (grid cell)
 for cpt, cinfo in gem_files.iteritems():
     print cpt
-    cFile = cinfo['file']
+    cFile = open(cinfo['file'],'r')
     cLat = cinfo['latitude']
     cLon = cinfo['longitude']
     df = pd.read_csv(cFile, sep="\t", parse_dates=True)
+    cFile.close()
     df.set_index('datetime', inplace=True)
     df.index = pd.to_datetime(df.index)
     p_mod = df['p'] # get series
@@ -127,8 +128,9 @@ for cpt, cinfo in gem_files.iteritems():
 
     # Apply to full GEM/model period and export to new ascii forcing dir
     df['p'] = df.p * cBiasRatio
-    file_out = os.path.join(output_gem_dir, cpt+'.chm')
-    df.to_csv(file_out,sep='\t',date_format='%Y%m%dT%H%M%S', mode='a', header=False)
+    file_out = open(os.path.join(output_gem_dir, cpt+'.chm'),'w')
+    df.to_csv(file_out,sep='\t',date_format='%Y%m%dT%H%M%S')
+    file_out.close()
     # Update config file
     gem_files[cpt]['file'] = file_out
 
