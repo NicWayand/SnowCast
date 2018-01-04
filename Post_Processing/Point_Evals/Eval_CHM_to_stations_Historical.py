@@ -174,7 +174,7 @@ f.tight_layout()
 # Add Legends
 first_legend = plt.legend(handles=h_obs, loc='upper left')
 ax = ax1.add_artist(first_legend)
-plt.legend([h_obs[0],h_mod[1]], ['Observed', 'Modeled'], loc='upper center')
+plt.legend([h_obs[0],h_mod[0]], ['Observed', 'Modeled'], loc='upper center')
 leg = ax1.get_legend()
 leg.legendHandles[0].set_color('black')
 leg.legendHandles[1].set_color('black')

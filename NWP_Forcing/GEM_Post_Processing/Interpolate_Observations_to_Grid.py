@@ -5,15 +5,184 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import os
+import sys
+import datetime
 from scipy.interpolate import griddata
+import imp
+import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
+import PP
+import idw
+
+# General plotting settings
+sns.set_style('whitegrid')
+sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
+fig_res = 90 # dpi
+
+# Load in config file
+#######  load user configurable paramters here    #######
+# Check user defined configuraiton file
+if len(sys.argv) != 2:
+    sys.exit('Requires 1 argument [configuration file] ')
+
+# Get name of configuration file/module
+configfile = sys.argv[1]
+# Load in configuration file as module
+X = imp.load_source('',configfile)
+
+# Assign to local variables
+data_dir = X.data_dir
+git_dir   = X.git_dir
+
+# Interpolated obs file out
+nc_file_out = os.path.join(data_dir, 'QC', 'Gridded.nc')
 
 # Load in GEM model grid and point Observation data
-ds_gem = xr.open_dataset(r'F:\Work\e\Data\Mesoscale\GEM\west\netcdf\GEM_2_5km_west_2017-03-23T01_00_00_000000000.nc')
+ds_gem = xr.open_dataset(r'/media/data3/nicway/GEM/west/netcdf_archive/GEM_2_5km_west_2017-03-27T01:00:00.000000000.nc')
+ds_gem = ds_gem.isel(datetime=0).drop('datetime')
+
+# Trim to CRHO domain
+lat_r = [50.66,51.7933333333333]
+lon_r = [-116.645,-114.769166666667]
+ds_gem = ds_gem.where((ds_gem.gridlat_0>lat_r[0]) & (ds_gem.gridlat_0<lat_r[1]) &
+                      (ds_gem.gridlon_0>lon_r[0]) &
+                  (ds_gem.gridlon_0<lon_r[1]), drop=True)
 print(ds_gem)
-data_dir = r'F:\Work\e\Data\Obs\Canada_Project_Sites\CSAS_data'
-obs_file = os.path.join(data_dir,'QC','Hourly_QC.nc')
+
+# Load in Observations
+obs_file = os.path.join(data_dir, 'QC', 'Hourly_QC.nc')
 ds_obs = xr.open_dataset(obs_file)
 print(ds_obs)
 
-# Define target grid
-grid = 5
+cvar = 'IncrementalPrecipitationA'
+
+# Get precipitation within time period of interest
+sDate = datetime.datetime(2012, 10, 1)
+eDate = datetime.datetime(2016, 9, 30)
+ds_pts = ds_obs[cvar]
+ds_pts = ds_pts.sel(Time_UTC=slice(sDate, eDate))
+
+# Trim stations to domain of interest (allow some padding to included
+# stations around boarder
+bdy = 0.2 # degrees boundary
+ds_pts = ds_pts.where((ds_pts.Lat>lat_r[0]-bdy) & (ds_pts.Lat<lat_r[1]+bdy) &
+                      (ds_pts.Lon>lon_r[0]-bdy) &
+                  (ds_pts.Lon<lon_r[1]+bdy), drop=True)
+
+
+
+# Get sum for checking data QC
+ds_pts_sum = ds_pts.sum(dim='Time_UTC')
+
+# preciping = ds_pts>0
+# ds_pts = ds_pts.where(preciping,drop=True)
+# ds_pts = ds_pts.isel(Time_UTC=0)
+# ds_pts.data = np.random.randn(ds_pts.size)
+
+# Drop missing stations
+ds_pts = ds_pts.where((ds_pts_sum!=0) & (ds_pts_sum.notnull()) &
+                      (ds_pts.Lon.notnull()) & (ds_pts.Lat.notnull())
+                      & (ds_pts.Elevation.notnull()), drop=True)
+# Drop bad stations w/o any precip (need to do in QC step)
+# ds_pts = ds_pts.where(ds_pts_sum > ds_pts_sum.max()*0.2, drop=True)
+
+# Plot check timeseries of cummulative precipitation
+plt.figure()
+plt.plot(ds_pts.Time_UTC, ds_pts.cumsum(dim='Time_UTC'))
+
+# Get obs info
+x = ds_pts.Lon.values
+y = ds_pts.Lat.values
+E = ds_pts.Elevation.values
+
+# Get model(target) info
+xi = ds_gem.gridlon_0
+yi = ds_gem.gridlat_0
+Ei = ds_gem.HGT_P0_L1_GST0
+
+# Initialize dataArray
+da_list = []
+
+# Loop through time
+for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19T01:00:00')):
+    # Get current time
+    cval = ds_pts.sel(Time_UTC=t)
+    print(t.values)
+
+    # Set up IDW
+    w = idw.IDW(x, y, xi, yi, mz=E, GridZ=Ei, power=2)
+
+    # Check we have some observations
+    if cval.notnull().sum()==0:
+        cval = 0
+
+    # De-trend (wrt Elevation)
+    cval_grid = w.detrendedIDW(cval.values, 0, zeros=None)
+    cval_grid = cval_grid.where(cval_grid>=0).fillna(0)
+
+    # Add time stamp
+    cval_grid['Time_UTC'] = t
+
+    # Store interpolated grid
+    da_list.append(cval_grid)
+
+    # Plot checks
+    # if cval.max()*1000>25:
+    #     # Check for trend with elevation
+    #     # plt.figure()
+    #     # plt.plot(cval.values, cval.Elevation.values, 'ko')
+    #
+    #     # Plot contour the gridded data and points
+    #     p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
+    #     plt.figure()
+    #     plt.pcolormesh(cval_grid.gridlon_0, cval_grid.gridlat_0, cval_grid.values*1000, cmap=p_colors,
+    #                    vmin=np.nanmin(cval_grid.values*1000), vmax=np.nanmax(cval_grid.values*1000))
+    #     plt.colorbar()
+    #     # plot data points.
+    #     plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
+    #     plt.scatter(x,y,marker='o',c=cval.values*1000,s=6, cmap=p_colors)
+    #
+    #     plt.show()
+
+# Concat over time
+da_grid = xr.concat(da_list, dim='Time_UTC')
+
+# Set correct variable name
+da_grid.name = cvar
+
+# Save to netcdf file
+da_grid.to_netcdf(nc_file_out)
+
+#
+# # Plot contour the gridded data and points
+# p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
+# plt.figure()
+# plt.pcolormesh(da_grid.gridlon_0, da_grid.gridlat_0, cval_grid.values*1000, cmap=p_colors,
+#                vmin=np.nanmin(da_grid.sum(dim.values*1000), vmax=np.nanmax(cval_grid.values*1000))
+# plt.colorbar()
+# # plot data points.
+# plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
+# plt.scatter(x,y,marker='o',c=cval.values*1000,s=6, cmap=p_colors)
+
+#
+# # grid the data.
+# zi = griddata((x, y), z, (xi, yi), method='linear')
+# print(np.nanmax(zi), np.nanmin(zi))
+#
+# Plot contour the gridded data and points
+# p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
+# plt.figure()
+# plt.pcolormesh(xi, yi, zi, cmap=p_colors, vmin=np.nanmin(z), vmax=np.nanmax(z))
+# plt.colorbar()
+# # plot data points.
+# plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
+# plt.scatter(x,y,marker='o',c=z,s=6, cmap=p_colors)
+#
+#
+#
+plt.show()
+
+
+
+
