@@ -11,15 +11,23 @@ import time
 import utm
 ###
 # Experimental cache option to speed up dask calls
-import cachey 
-from dask.cache import Cache
-cache = Cache(10e9)
-cache.register()
+# import cachey
+# from dask.cache import Cache
+# cache = Cache(10e9)
+# cache.register()
 ###
 start_time = time.time()
 # Hack to force datetimes to display in GMT/UTC (numpy 1.11.1 has fixed this but other dependent modules (pynio) can't handel numpy 1.11.1)
 os.environ['TZ'] = 'GMT'
 time.tzset()
+
+
+def drop_possible_var(var_in, c_df):
+    ''' Drop possible variables in dataframes'''
+    if var_in in c_df:
+        return c_df.drop(var_in, axis=1)
+    else:
+        return c_df
 
 # Load in config file
 #######  load user configurable paramters here    #######
@@ -33,7 +41,7 @@ configfile = sys.argv[-1]
 # Load in configuration file as module
 X = imp.load_source('',configfile)
 
-output_dt = 1 # Hours (current from 0-144 hours)
+output_dt = 1 # Hours
 
 # Assign to local variables
 netcdf_dir = X.netcdf_dir
@@ -51,7 +59,15 @@ if coordsystem=='pro':
 os.chdir(netcdf_dir)
 
 # Get all file names
-all_files =  sorted(glob.glob('GEM_rockies_*_00_24.nc'))
+all_files =  sorted(glob.glob('GEM_rockies_*_00_24*.nc'))
+rm_files = ['GEM_rockies_2013031906_00_24_surf.nc', 'GEM_rockies_2013031906_00_24_lvl.nc',
+                        'GEM_rockies_2013041506_25_42.nc','GEM_rockies_2013061318_25_42.nc',
+                        'GEM_rockies_2014021818_00_24.nc','GEM_rockies_2014102118_25_42.nc',
+                        'GEM_rockies_2014102118_00_24.nc']
+# all_files = set(glob.glob('GEM_rockies_*.nc'))# - set(glob.glob("*_lvl*")))
+# all_files = [all_files - x for x in rm_files]
+all_files = sorted(all_files)
+# GEM_rockies_2013031906_00_24_surf.nc
 #hgt_file = r'/media/data3/nicway/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
 #ds_hgt_in = xr.open_dataset(hgt_file).isel(time=0).drop('time')
 
@@ -62,6 +78,8 @@ if not os.path.isdir(ascii_dir):
     os.mkdir(ascii_dir)
 
 for cd in all_files:
+    if cd in rm_files: # we don't want this file
+        continue
     flag1 = False # flag to check we are not missing a forecast
     print cd
 
@@ -91,7 +109,7 @@ for cd in all_files:
 
     # Apply a bias correction (optional)
     #ds['Qli'] = ds.Qli + 30
-    #print "Warning, applying +30 ilwr bias correctoin"
+    #print "Warning, applying +30 ilwr bias correction"
 
     # Drop sigma dims
     ds = ds.isel(sigma=0).drop('sigma')
@@ -101,7 +119,7 @@ for cd in all_files:
     # ds['u'] = ds.u.isel(sigma=0).drop('sigma')
     # ds['vw_dir'] = ds.vw_dir.isel(sigma=0).drop('sigma')
 
-    # Relative humidity (Based on Tetens' formula (1930))
+    # Relative humidity
     ds['rh'] = ds.rh*100 # fraction to %
 
     # Pressure (after RH calcs)
@@ -115,7 +133,8 @@ for cd in all_files:
     ds['p'] = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
 
     # Geopotentila to height
-    ds['HGT_surface'] = ds.GZ*9.81
+    if 'GZ' in ds: # Some files are missing GZ (fine as long as its not the first one!)
+        ds['HGT_surface'] = ds.GZ*9.81
 
     # Rename time
     ds.rename({'time':'datetime'},inplace=True)
@@ -149,11 +168,7 @@ for cd in all_files:
                 continue
             df = sub_grid.to_dataframe()
 
-            def drop_possible_var(var_in,df):
-                if var_in in df:
-                    return df.drop(var_in,axis=1)
-                else:
-                    return df
+
             for cdropVar in ['HGT_surface','lat_0','lon_0']:
                 df = drop_possible_var(cdropVar,df)
 
@@ -186,16 +201,16 @@ for cd in all_files:
             else:
                 # Write to ascii CHM format
                 of = open('point_'+str(i)+'_'+str(j)+'.chm','a')
-                if not flag1: # if we haven't checked yet (first station)
-                    # Check last time steps line up
-                    old_df = pd.read_csv('point_'+str(i)+'_'+str(j)+'.chm',sep="\t",parse_dates=True)
-                    wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=output_dt)
-                    if not (wantTime==pd.to_datetime(df.index[0])):
-                        print 'Missing time steps for file'
-                        print 'Wanted ' + str(wantTime)
-                        print 'Got ' + str(df.index[0])
-                        sys.exit()
-                flag1 = True
+                # if not flag1: # if we haven't checked yet (first station)
+                #     # Check last time steps line up
+                #     old_df = pd.read_csv('point_'+str(i)+'_'+str(j)+'.chm',sep="\t",parse_dates=True)
+                #     wantTime = pd.to_datetime(old_df['datetime'].iloc[-1]) + datetime.timedelta(hours=output_dt)
+                #     if not (wantTime==pd.to_datetime(df.index[0])):
+                #         print 'Missing time steps for file'
+                #         print 'Wanted ' + str(wantTime)
+                #         print 'Got ' + str(df.index[0])
+                #         sys.exit()
+                # flag1 = True
 
                 df.to_csv(of,sep='\t',date_format='%Y%m%dT%H%M%S', mode='a', header=False)
                 of.close()
