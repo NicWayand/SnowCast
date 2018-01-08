@@ -88,6 +88,7 @@ for cd in all_files:
     ds = xr.open_dataset(cd,engine='netcdf4')
 
     # Rename variables
+    Allow skip if variable is missing
     ds.rename(var_dic, inplace=True)
 
     # Select only times we want

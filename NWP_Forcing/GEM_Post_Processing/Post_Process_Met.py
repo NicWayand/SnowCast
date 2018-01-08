@@ -41,22 +41,24 @@ obs_file = os.path.join(data_dir, 'QC', 'Gridded.nc')
 ds_obs = xr.open_dataset(obs_file)
 
 # Load in info on GEM data (in ascii format)
-main_gem_dir = '/media/data3/nicway/GEM/archive/SOAP/'
-ascii_in_dir = 'ascii_HRDPS_SnowCast_full'
-GEM_config_file = os.path.join(main_gem_dir, ascii_in_dir, 'SOAP_forcing.json')
+# main_gem_dir = '/media/data3/nicway/GEM/archive/SOAP/'
+# ascii_in_dir = 'ascii_HRDPS_SnowCast_full'
+# json_config_file = 'SOAP_forcing.json'
+
+main_gem_dir = '/media/data3/nicway/GEM/west/'
+ascii_in_dir = 'CHM_archive'
+json_config_file = 'GEM_forcing.json'
+
+GEM_config_file = os.path.join(main_gem_dir, ascii_in_dir, json_config_file)
 gem_files = json.load(open(GEM_config_file))
 
 # Output corrected GEM dir
-ascii_out_dir = 'precip_test'
+ascii_out_dir = 'Bias_p'
 output_gem_dir = os.path.join(main_gem_dir, ascii_out_dir)
-GEM_config_file_out = os.path.join(main_gem_dir, ascii_out_dir, 'SOAP_forcing.json')
+GEM_config_file_out = os.path.join(main_gem_dir, ascii_out_dir, json_config_file)
 if not os.path.exists(output_gem_dir):
     os.makedirs(output_gem_dir)
 
-
-
-# Ensemble number
-# N_e = 8
 
 def naive_fast(latvar,lonvar,lat0,lon0):
     # Read latitude and longitude from file into numpy arrays

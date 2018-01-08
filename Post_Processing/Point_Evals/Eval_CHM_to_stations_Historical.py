@@ -35,6 +35,8 @@ elif chm_run_dir=='HRDPS_Current_BS':
     c_run_dt_in = 'H'
 elif chm_run_dir=='HRDPS_Historical':
     c_run_dt_in = 'W'
+elif chm_run_dir=='HRDPS_Historical_Post_Processed':
+    c_run_dt_in = 'W'
 elif chm_run_dir=='GDPS_Current':
     c_run_dt_in = '3H'
 else:

@@ -41,7 +41,7 @@ def SPHM_2_RELHM(SPHM,PRESS,TAIR):
 
     TDCEL = TAIR-TFREEZE
     VPSAT = SATVPFRZ * np.exp( (17.27*TDCEL) / (237.30 + TDCEL) )       #! Vapour Press      (Pa)
-    SPHM2RELHM = (SPHM * PRESS)/(VPSAT * (W_RATIO + SPHM*(1.-W_RATIO))) * 100
+    SPHM2RELHM = (SPHM * PRESS)/(VPSAT * (W_RATIO + SPHM*(1.-W_RATIO))) * 100.0
     # Bounds
     SPHM2RELHM = SPHM2RELHM.where(SPHM2RELHM <= 100).fillna(100)
     SPHM2RELHM = SPHM2RELHM.where(SPHM2RELHM >= 5).fillna(5)
@@ -85,7 +85,7 @@ def preprocess(x):
     if x[cvar].forecast_time_units=='hours':
     	x['forecast_hour'] = x[cvar].attrs['forecast_time']
     elif x[cvar].forecast_time_units=='minutes':
-   	x['forecast_hour'] = x[cvar].attrs['forecast_time']/60 # minutes to hours
+   	x['forecast_hour'] = x[cvar].attrs['forecast_time']/60.0 # minutes to hours
     else:
 	import sys
 	print('found forecast_time_units not expected')
