@@ -110,7 +110,7 @@ ds = xr.merge(da_fill_list)
 da_fill_list = None # Memory clean up
 
 # Convert units
-ds['WindSpeed'] = ds['WindSpeed'] * 1000/(60*60) # km/h to m/s
+ds['WindSpeed'] = ds['WindSpeed'] * 1000.0/(60.0*60.0) # km/h to m/s
 
 ## ADD UNITS
 # Add variable attributes (units), and fix variable names (remove spaces)

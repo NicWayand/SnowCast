@@ -64,6 +64,7 @@ ds_CRHO = ds_CRHO[['WindDirectionatA',
  'SnowDepthA',
  'AirtemperatureA',
  'IncrementalPrecipitationA',
+ 'IncrementalPrecipitationC',
  'UpwardSolarRadiation',
  'AirMoistureContentA',
  'UpwardTerrestrialRad',
@@ -101,11 +102,18 @@ var_dict = {'AirTemperature':'AirtemperatureA','Precipitation':'CummulativePreci
 ds_BC_AB.rename(var_dict, inplace=True);
 
 # Adjust units to be metric standard
-ds_BC_AB['SnowWaterEquivelentA'] = ds_BC_AB.SnowWaterEquivelentA / 1000 # mm to m
-ds_BC_AB['CummulativePrecipitationA'] = ds_BC_AB.CummulativePrecipitationA / 1000 # mm to m
-ds_BC_AB['SnowDepthA'] = ds_BC_AB.SnowDepthA / 100 # cm to m
+ds_BC_AB['SnowWaterEquivelentA'] = ds_BC_AB.SnowWaterEquivelentA / 1000.0 # mm to m
+ds_BC_AB['CummulativePrecipitationA'] = ds_BC_AB.CummulativePrecipitationA / 1000.0 # mm to m
+ds_BC_AB['SnowDepthA'] = ds_BC_AB.SnowDepthA / 100.0 # cm to m
 
 # Merge CRHO HIST and CRHO NRT (HIST has been more rigoursly QC'ed to use it first)
+# First merge different type of precip gauges in CRHO historical data
+# IncrementalPrecipitationA --> Pluvio gauges
+# IncrementalPrecipitationB --> Tipping bucket (bad in winter months)
+# IncrementalPrecipitationC --> Genor
+# Here we merge IncrementalPrecipitationC into IncrementalPrecipitationA.
+ds_CRHO['IncrementalPrecipitationA'] = ds_CRHO.IncrementalPrecipitationA.combine_first(ds_CRHO.IncrementalPrecipitationC)
+# Then update with NRT data
 ds_CRHO_all = ds_CRHO.combine_first(ds_CRHO_NRT)
 
 # Merge CRHO with other AB and BC data
@@ -120,7 +128,7 @@ var_dict = {'RealtiveHumidity':'AirMoistureContentA','WindSpeed':'ScalarWindSpee
 ds_ABE_AGG.rename(var_dict, inplace=True);
 
 # Adjust units to be metric standard
-ds_ABE_AGG['IncrementalPrecipitationA'] = ds_ABE_AGG.IncrementalPrecipitationA / 1000 # mm to m
+ds_ABE_AGG['IncrementalPrecipitationA'] = ds_ABE_AGG.IncrementalPrecipitationA / 1000.0 # mm to m
 
 
 def find_common_staID(ds1,ds2):

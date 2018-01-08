@@ -152,6 +152,10 @@ w_2_s_vars = {'TEMPERATURE_AIR':'AirtemperatureA',
              'SurfTemp':'tsrf'}
 ds_all.rename(w_2_s_vars, inplace=True)
 
+# Units to standard metric
+ds_all['IncrementalPrecipitationA'] = ds_all.IncrementalPrecipitationA / 1000.0 # mm to m
+ds_all['CummulativePrecipitationA'] = ds_all.CummulativePrecipitationA / 1000.0 # mm to m
+
 # To netcdf
 ds_all.to_netcdf(netcdf_file_out)
 
