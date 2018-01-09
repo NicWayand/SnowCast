@@ -19,7 +19,7 @@ X = imp.load_source('',configfile)
 
 # Assign to local variables
 data_dir = X.data_dir
-git_dir   = X.git_dir
+git_dir = X.git_dir
 
 # Data network
 network = 'ABE_AGG_HIST'

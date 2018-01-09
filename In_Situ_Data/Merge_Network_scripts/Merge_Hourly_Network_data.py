@@ -130,7 +130,6 @@ ds_ABE_AGG.rename(var_dict, inplace=True);
 # Adjust units to be metric standard
 ds_ABE_AGG['IncrementalPrecipitationA'] = ds_ABE_AGG.IncrementalPrecipitationA / 1000.0 # mm to m
 
-
 def find_common_staID(ds1,ds2):
     same = list(set(list(ds1.staID.values)).intersection(list(ds2.staID.values)))
     return(ds1.sel(staID=same).station_name)
