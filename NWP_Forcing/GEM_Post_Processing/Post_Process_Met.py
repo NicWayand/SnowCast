@@ -1,5 +1,6 @@
 '''
-Take netcdf file of observations of variable X, interpolate to a grid taken from a NWP model
+Apply statistic model to adjust numerical weather output based on gridded observed data
+
 '''
 import xarray as xr
 import pandas as pd
@@ -12,9 +13,16 @@ import imp
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
-import PP
 import idw
 import json
+import dask.multiprocessing
+from dask import compute, delayed
+import PP
+import time
+start_time = time.time()
+# Hack to force datetimes to display in GMT/UTC (numpy 1.11.1 has fixed this but other dependent modules (pynio) can't handel numpy 1.11.1)
+os.environ['TZ'] = 'GMT'
+time.tzset()
 
 # General plotting settings
 sns.set_style('whitegrid')
@@ -36,21 +44,36 @@ X = imp.load_source('',configfile)
 data_dir = X.data_dir
 git_dir = X.git_dir
 
-# Interpolated obs file out
-obs_file = os.path.join(data_dir, 'QC', 'Gridded.nc')
-ds_obs = xr.open_dataset(obs_file)
+# Target GEM files
+gem_run = 'Historical'
+# gem_run = 'Current'
 
 # Load in info on GEM data (in ascii format)
-# main_gem_dir = '/media/data3/nicway/GEM/archive/SOAP/'
-# ascii_in_dir = 'ascii_HRDPS_SnowCast_full'
-# json_config_file = 'SOAP_forcing.json'
-
-main_gem_dir = '/media/data3/nicway/GEM/west/'
-ascii_in_dir = 'CHM_archive'
-json_config_file = 'GEM_forcing.json'
+if gem_run == 'Current':
+    main_gem_dir = '/media/data3/nicway/GEM/west/'
+    ascii_in_dir = 'CHM_archive'
+    json_config_file = 'GEM_forcing.json'
+elif gem_run =='Historical':
+    main_gem_dir = '/media/data3/nicway/GEM/archive/SOAP/'
+    ascii_in_dir = 'ascii_HRDPS_SnowCast_full'
+    json_config_file = 'SOAP_forcing.json'
 
 GEM_config_file = os.path.join(main_gem_dir, ascii_in_dir, json_config_file)
 gem_files = json.load(open(GEM_config_file))
+
+# Load in Gridded Obs file
+obs_file = os.path.join(data_dir, 'QC', gem_run+'_Gridded.nc')
+ds_obs = xr.open_dataset(obs_file)
+
+# Dictonary of obs var name to CHM var names
+vars_all = {'AirtemperatureA':'t','AirMoistureContentA':'rh','IncrementalPrecipitationA':'p',
+            'ScalarWindSpeedA':'U_2m_above_srf','DownwardSolarRadiation':'iswr','DownwardTerrestrialRad':'ilwr',
+            'UpwardTerrestrialRad':'ilwr_out',
+            'SnowWaterEquivelentA':'swe','SnowDepthA':'snowdepthavg','WindDirectionatA':'vw_dir',
+           'Time_UTC':'datetime'}
+# Trim to variables contained in ds_obs
+vars_new = { your_key: vars_all[your_key] for your_key in ds_obs.data_vars }
+ds_obs = ds_obs.rename(vars_new);
 
 # Output corrected GEM dir
 ascii_out_dir = 'Bias_p'
@@ -60,92 +83,49 @@ if not os.path.exists(output_gem_dir):
     os.makedirs(output_gem_dir)
 
 
-def naive_fast(latvar,lonvar,lat0,lon0):
-    # Read latitude and longitude from file into numpy arrays
-    latvals = latvar[:]
-    lonvals = lonvar[:]
-    dist_sq = (latvals-lat0)**2 + (lonvals-lon0)**2
-    minindex_flattened = dist_sq.argmin()  # 1D index of min element
-    iy_min,ix_min = np.unravel_index(minindex_flattened, latvals.shape)
-    return iy_min,ix_min
 
 # Initialize df to save stats
 df_stats = pd.DataFrame(index=gem_files.keys(),
                         columns=['orig_Bias', 'adj_Bias'])
 
-# Loop through each GEM file (grid cell)
-for cpt, cinfo in gem_files.iteritems():
-    print cpt
-    cFile = open(cinfo['file'],'r')
-    cLat = cinfo['latitude']
-    cLon = cinfo['longitude']
-    df = pd.read_csv(cFile, sep="\t", parse_dates=True)
-    cFile.close()
-    df.set_index('datetime', inplace=True)
-    df.index = pd.to_datetime(df.index)
-    p_mod = df['p'] # get series
-    p_mod.name = 'model'
 
-    # Find nearest obs cell
-    (c_y, c_x) = naive_fast(ds_obs.gridlat_0.values,
-                            ds_obs.gridlon_0.values,
-                            cLat, cLon)
-    p_obs = ds_obs.isel(xgrid_0=c_x, ygrid_0=c_y).IncrementalPrecipitationA.to_series()
-    p_obs = p_obs*1000 # m to mm
-    p_obs.name = 'observed'
-
-    # Trim to common period
-    df_mrg = pd.concat([p_mod, p_obs], axis=1, join='inner')
-
-    # Test plots
-    # df_mrg.plot()
-    # df_mrg.cumsum().plot()
-    # plt.figure()
-    # plt.scatter(df_mrg['observed'],df_mrg['model'])
-
-    # Select training period (year/season/month)
-    t_start = '2014-10-01'
-    t_end = '2015-09-30'
-    df_t = df_mrg.loc[t_start:t_end]
+def bias_adjust(cf=None, cinfo=None, cvarible=None):
+    # Create new point forcing class
+    cpt = PP.point_forcing(cinfo=cinfo,
+                           ds_grid_obs=ds_obs,
+                           cvariable=cvarible)
+    # Define calibration and evaluation periods
+    wyrs = cpt.define_cal_val_periods(method='water_year')
 
     # Fit model
-    # https://stackoverflow.com/questions/39330483/fitting-location-parameter-in-the-gamma-distribution-with-scipy
-    t_sum = df_t.dropna().sum(axis=0) # Accumluated precip in t period (mm)
-    cBiasRatio = t_sum['observed']/t_sum['model']
-    gem_files[cpt]['pBiasRatio'] = cBiasRatio # store in json dictionary
+    (model_bias, true_bias) = cpt.fit_simple_bias_model(periods=wyrs)
 
-    # Evaluate PP model to obs over evaluation period
-    e_start = '2015-10-01'
-    e_end = '2016-09-30'
-    df_eval = df_mrg.loc[e_start:e_end]
-    # Apply model to evaluation period
-    df_eval['model_adj'] = df_eval.model * cBiasRatio
+    # Modify in place CHM forcing for variable X
+    df_adj = cpt.apply_bias(periods=wyrs, model_bias=model_bias, cvariable=cvarible)
 
-    # Evaluate fit
-    e_sum = df_eval.dropna().sum(axis=0) # Accumluated precip in t period (mm)
-    new_Bias = e_sum['observed']/e_sum['model_adj']
-    orig_Bias = e_sum['observed']/e_sum['model']
-    df_stats.set_value(cpt, 'orig_Bias', orig_Bias)
-    df_stats.set_value(cpt, 'adj_Bias', new_Bias)
+    # Write out to new output_dir
+    file_out = os.path.join(output_gem_dir, cf + '.chm')
+    cpt.write_to_ascii(df_out=df_adj, file_out=file_out)
 
-    # Apply to full GEM/model period and export to new ascii forcing dir
-    df['p'] = df.p * cBiasRatio
-    file_out = open(os.path.join(output_gem_dir, cpt+'.chm'),'w')
-    df.to_csv(file_out,sep='\t',date_format='%Y%m%dT%H%M%S')
-    file_out.close()
-    # Update config file
-    gem_files[cpt]['file'] = file_out
+    return (model_bias, true_bias)
 
-# Write out json file with metadata for these points
+
+# Loop through each GEM file (grid cell)
+values = []
+for cf, cinfo in gem_files.iteritems():
+
+    values.append(delayed(bias_adjust)(cf, cinfo, 'p'))
+
+    # Update config file with new file path
+    file_out = os.path.join(output_gem_dir, cf + '.chm')
+    gem_files[cf]['file'] = file_out
+
+# values = [delayed(bias_adjust)(cf,cinfo,'p') for cf in all_files]
+results = compute(*values, get=dask.multiprocessing.get)
+print("--- Took %s minutes ---" % ((time.time() - start_time)/60))
+
+# Write out json file with metadata to new path
 with open(GEM_config_file_out, 'w') as outfile:
     json.dump(gem_files, outfile,indent=4, sort_keys=True)
 
-# Summary results of all obs grid points
-df_stats.plot()
-plt.show()
 
-# x = 5
-
-# Apply
-
-# Export PP model to original ascii format

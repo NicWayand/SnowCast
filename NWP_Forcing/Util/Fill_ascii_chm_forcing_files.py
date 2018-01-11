@@ -2,12 +2,12 @@ import os
 import glob
 import imp
 import sys
-import pandas as pd
 import time
 import utm
 import matplotlib.pyplot as plt
 import dask.multiprocessing
 from dask import compute, delayed
+import chm_forcing
 ###
 start_time = time.time()
 # Hack to force datetimes to display in GMT/UTC (numpy 1.11.1 has fixed this but other dependent modules (pynio) can't handel numpy 1.11.1)
@@ -50,39 +50,8 @@ os.chdir(ascii_dir)
 
 all_files = sorted(set(glob.glob('*.chm')))
 
-class ascii_file(object):
-
-
-    def __init__(self, cfile=None):
-        # Load it in
-        cfile = open(cfile,'r')
-        self.df = pd.read_csv(cfile, sep="\t", parse_dates=True, na_values = -9999)
-        cfile.close()
-        self.df.set_index('datetime', inplace=True)
-        self.df.index = pd.to_datetime(self.df.index)
-
-    def add_missing_timesteps(self, freq='H'):
-        # Reindex to have continuous time steps
-        self.df_c = self.df.reindex(pd.date_range(self.df.index[0], self.df.index[-1],
-                                          freq=freq))
-
-    def fill_missing_variables(self, method='linear'):
-        # Simple linear interpolation along time
-        if method == 'linear' or method == 'spline':
-            self.df_c = self.df_c.interpolate(method=method, axis=0).ffill().bfill()
-        else:
-            raise ValueError('Method not found.')
-
-        assert not self.df_c.isnull().values.any()
-
-    def write_to_ascii(self, cfile=None):
-        self.df_c.index.name = 'datetime' # This gets dropped so add back in
-        file_out = open(os.path.join(output_dir, cfile), 'w')
-        self.df_c.to_csv(file_out, sep='\t', date_format='%Y%m%dT%H%M%S')
-        file_out.close()
-
 def quick_fill(cf):
-    cO = ascii_file(cf)
+    cO = chm_forcing.point_forcing(cf, output_dir)
     cO.add_missing_timesteps(freq='H')
     cO.fill_missing_variables(method='linear')
     cO.write_to_ascii(cf)

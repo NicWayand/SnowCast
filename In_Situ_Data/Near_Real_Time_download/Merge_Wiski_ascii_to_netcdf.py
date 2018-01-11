@@ -27,6 +27,36 @@ X = imp.load_source('',configfile)
 data_dir = X.data_dir
 git_dir   = X.git_dir
 
+# Aggregate to different periods
+
+# https://www.eol.ucar.edu/content/wind-direction-quick-reference
+# Convert wind speed and direction to u/v components
+def WS_Wdir_2_U_V(obs_wdr,obs_ws):
+    import numpy as np
+    RperD = (np.pi / 180.0)
+    obs_U = -1 * obs_ws * np.sin(obs_wdr*RperD)
+    obs_V = -1 * obs_ws * np.cos(obs_wdr*RperD)
+    return (obs_U,obs_V)
+
+# Convert U and V components to Wdir and Wind speed
+def U_V_2_WS_Wdir(U,V):
+    import numpy as np
+    DperR = (180.0 / np.pi)
+    Wdir = (np.arctan2(-1*U,-1*V) * DperR)%360 # needed to take modulus of 360
+    WS   = np.sqrt(np.power(U,2)+np.power(V,2))
+    return (WS,Wdir)
+
+# Average WS and Wdir by component method
+def avg_Ws_Wdir(obs_wdr,obs_ws,dt_freq):
+    # Convert to U V
+    (obs_U,obs_V) = WS_Wdir_2_U_V(obs_wdr,obs_ws)
+    # Take average of components
+    obs_U_agg = obs_U.resample(freq=dt_freq,dim='Time_MST',how='mean',label='right')
+    obs_V_agg = obs_V.resample(freq=dt_freq,dim='Time_MST',how='mean',label='right')
+    # Convert back to WS and Wdir
+    (obs_ws_OUT,obs_wdir_OUT) = U_V_2_WS_Wdir(obs_U_agg,obs_V_agg)
+    return (obs_ws_OUT,obs_wdir_OUT)
+
 # Data network
 network = 'CRHO_NRT'
 download_dir = os.path.join(data_dir,network,'current')
@@ -156,8 +186,39 @@ ds_all.rename(w_2_s_vars, inplace=True)
 ds_all['IncrementalPrecipitationA'] = ds_all.IncrementalPrecipitationA / 1000.0 # mm to m
 ds_all['CummulativePrecipitationA'] = ds_all.CummulativePrecipitationA / 1000.0 # mm to m
 
+# Aggregate from 15 min to 1 hour
+# Aggregate (allow a fraction of missing period)
+percent_nan_allowed = 26  # (one 15 min out of an hour)
+skipna = True  # Skips nans when doing aggregation, then we remove those periods with less than percent_nan_allowed
+dt_out = 'H'
+
+# Aggregate booleans of not missing, to get fraction in agg period not missing
+obs_fraction_OK = ds_all.notnull().resample(freq=dt_out, dim='Time_MST', how='mean', label='right')
+
+# TODO: this behaves different on python 2.7 and 3.5, don't know why....
+ds_1hr = ds_all.resample(freq=dt_out, dim='Time_MST', how='mean', label='right', skipna=skipna)
+
+# For variables where we need to take the sum over the agg period
+for xvar in ['IncrementalPrecipitationA', 'IncrementalPrecipitationB', 'IncrementalPrecipitationC']:
+    if xvar in ds_1hr:
+        ds_1hr[xvar] = ds_all[xvar].resample(freq=dt_out, dim='Time_MST', how='sum', label='right',
+                                       skipna=skipna).T  # Transpose needed
+
+# For variables where we need to take the median over the agg period
+for xvar in ['SnowDepthQCvalue']:
+    if xvar in ds_1hr:
+        ds_1hr[xvar] = ds_all[xvar].resample(freq=dt_out, dim='Time_MST', how='median', label='right').T  # Transpose needed
+
+# Wind speed component average
+(obs_ws_D, obs_wdir_D) = avg_Ws_Wdir(ds_all['WindDirectionatA'], ds_all['ScalarWindSpeedA'], dt_out)
+ds_1hr['WindDirectionatA'] = obs_wdir_D.T  # Transpose needed
+ds_1hr['ScalarWindSpeedA'] = obs_ws_D.T  # Transpose needed
+
+# Drop values where fraction exceeds the threshold
+ds_1hr = ds_1hr.where(obs_fraction_OK >= (1 - percent_nan_allowed / 100))
+
 # To netcdf
-ds_all.to_netcdf(netcdf_file_out)
+ds_1hr.to_netcdf(netcdf_file_out)
 
 # # Test plot
 # import matplotlib.pyplot as plt

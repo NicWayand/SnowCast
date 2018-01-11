@@ -144,7 +144,7 @@ for c_net in set(ds_crho.network.values):
     lat_pts = lat_pts[I_not_nan]
     lon_pts = lon_pts[I_not_nan]
 
-    ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), s=50,
+    ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), s=100,
                 c=cmap_network[c_net], zorder=100, label=legend_network[c_net]) #yc, xc -- lists or numpy arrays
 # Snow Courses
 lat_pts = EC_data_crho.Lat.values
@@ -152,7 +152,8 @@ lon_pts = EC_data_crho.Lon.values
 I_not_nan = ~np.isnan(lat_pts) & ~np.isnan(lon_pts)
 lat_pts = lat_pts[I_not_nan]
 lon_pts = lon_pts[I_not_nan]
-ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), marker='o', s=50, c='m', zorder=200, label='Alberta Environment Snow Course') #yc, xc -- lists or numpy arrays
+ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), marker='o', s=100,
+            c='m', zorder=200, label='Alberta Environment Snow Course') #yc, xc -- lists or numpy arrays
 ax1.add_geometries(p_sh, ccrs.PlateCarree(),
                   edgecolor='black', facecolor='none', alpha=0.5)
 leg = plt.legend(fancybox=True, loc='lower left', frameon=True, fontsize='xx-large', bbox_to_anchor=(-0.009, -0.009))
@@ -170,7 +171,7 @@ gl.ylabel_style = {'size': 'x-large'}
 file_out = os.path.join(fig_dir, 'CRHO_station_map.png')
 chmF.save_figure(fig2, file_out, fig_res)
 
-# plt.show()
+plt.show()
 
 #
 #

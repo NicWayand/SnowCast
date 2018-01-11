@@ -35,19 +35,46 @@ X = imp.load_source('',configfile)
 data_dir = X.data_dir
 git_dir   = X.git_dir
 
+# Target GEM files
+gem_run = 'Historical'
+# gem_run = 'Current'
+
 # Interpolated obs file out
-nc_file_out = os.path.join(data_dir, 'QC', 'Gridded.nc')
+nc_file_out = os.path.join(data_dir, 'QC', gem_run+'_Gridded.nc')
 
 # Load in GEM model grid and point Observation data
-ds_gem = xr.open_dataset(r'/media/data3/nicway/GEM/west/netcdf_archive/GEM_2_5km_west_2017-03-27T01:00:00.000000000.nc')
-ds_gem = ds_gem.isel(datetime=0).drop('datetime')
+if gem_run == 'Current':
+    ds_gem = xr.open_dataset(r'/media/data3/nicway/GEM/west/netcdf_archive/GEM_2_5km_west_2017-03-27T01:00:00.000000000.nc')
+    # Trim to one time step
+    ds_gem = ds_gem.isel(datetime=0).drop('datetime')
+elif gem_run == 'Historical':
+    ds_gem = xr.open_dataset(r'/media/data3/nicway/GEM/archive/SOAP/netcdf/kananaskis_SHRPD_HRPDS_2.5km_2017_08_UTC_DLWRF_SFC.nc')
+    # Hgt not included in GEM files so import here and merge later
+    ds_hgt = xr.open_dataset(r'/media/data3/nicway/GEM/archive/SOAP/kananaskis_SHRPD_HRPDS_2.5km_2014_11_UTC_HGT_SFC.nc',
+                             engine='netcdf4')
+    # Drop time (same for all times)
+    ds_hgt = ds_hgt.isel(time=0)
+    ds_hgt = ds_hgt.rename({'HGT_surface':'HGT_P0_L1_GST0'});
+    # Rename to common dim names
+    ds_gem = ds_gem.rename({'time':'datetime',
+                            'latitude':'gridlat_0',
+                            'longitude':'gridlon_0'});
+    # Trim to one time step
+    ds_gem = ds_gem.isel(datetime=0).drop('datetime')
+    ds_gem = xr.merge([ds_gem, ds_hgt])
+    # Adjust longitude
+    ds_gem['gridlon_0'] = ds_gem.gridlon_0 - 360
+else:
+    raise ValueError('gem_run not found.')
 
 # Trim to CRHO domain
 lat_r = [50.66,51.7933333333333]
 lon_r = [-116.645,-114.769166666667]
-ds_gem = ds_gem.where((ds_gem.gridlat_0>lat_r[0]) & (ds_gem.gridlat_0<lat_r[1]) &
-                      (ds_gem.gridlon_0>lon_r[0]) &
-                  (ds_gem.gridlon_0<lon_r[1]), drop=True)
+bdy = 0.2 # degrees boundary
+ds_gem = ds_gem.where((ds_gem.gridlat_0>lat_r[0]-bdy) &
+                      (ds_gem.gridlat_0<lat_r[1]+bdy) &
+                      (ds_gem.gridlon_0>lon_r[0]-bdy) &
+                  (ds_gem.gridlon_0<lon_r[1]+bdy), drop=True)
 print(ds_gem)
 
 # Load in Observations
@@ -59,18 +86,16 @@ cvar = 'IncrementalPrecipitationA'
 
 # Get precipitation within time period of interest
 sDate = datetime.datetime(2012, 10, 1)
-eDate = datetime.datetime(2016, 9, 30)
+eDate = datetime.datetime(2017, 9, 30)
 ds_pts = ds_obs[cvar]
 ds_pts = ds_pts.sel(Time_UTC=slice(sDate, eDate))
 
 # Trim stations to domain of interest (allow some padding to included
 # stations around boarder
-bdy = 0.2 # degrees boundary
+
 ds_pts = ds_pts.where((ds_pts.Lat>lat_r[0]-bdy) & (ds_pts.Lat<lat_r[1]+bdy) &
                       (ds_pts.Lon>lon_r[0]-bdy) &
                   (ds_pts.Lon<lon_r[1]+bdy), drop=True)
-
-
 
 # Get sum for checking data QC
 ds_pts_sum = ds_pts.sum(dim='Time_UTC')
@@ -115,11 +140,13 @@ for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19
 
     # Check we have some observations
     if cval.notnull().sum()==0:
-        cval = 0
+        print(t)
+        raise ValueError('No stations with data on this time step found')
 
     # De-trend (wrt Elevation)
     cval_grid = w.detrendedIDW(cval.values, 0, zeros=None)
-    cval_grid = cval_grid.where(cval_grid>=0).fillna(0)
+    cval_grid = cval_grid.where(cval_grid >= 0).fillna(0)
+    cval_grid = cval_grid.where(Ei.notnull()) # Replace original missing cells
 
     # Add time stamp
     cval_grid['Time_UTC'] = t
@@ -127,8 +154,8 @@ for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19
     # Store interpolated grid
     da_list.append(cval_grid)
 
-    # Plot checks
-    # if cval.max()*1000>25:
+    # # Plot checks
+    # if cval.max()*1000>5:
     #     # Check for trend with elevation
     #     # plt.figure()
     #     # plt.plot(cval.values, cval.Elevation.values, 'ko')
@@ -136,8 +163,17 @@ for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19
     #     # Plot contour the gridded data and points
     #     p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
     #     plt.figure()
-    #     plt.pcolormesh(cval_grid.gridlon_0, cval_grid.gridlat_0, cval_grid.values*1000, cmap=p_colors,
-    #                    vmin=np.nanmin(cval_grid.values*1000), vmax=np.nanmax(cval_grid.values*1000))
+    #     # p1 = (cval_grid*1000).plot(cmap=p_colors,
+    #     #                vmin=np.nanmin(cval_grid.values*1000),
+    #     #                vmax=np.nanmax(cval_grid.values*1000))
+    #     import numpy.ma as ma
+    #
+    #     Zm = ma.masked_invalid(cval_grid.values*1000)
+    #     plt.pcolormesh(cval_grid.gridlon_0, cval_grid.gridlat_0,
+    #                    Zm, cmap=p_colors,
+    #                    vmin=np.nanmin(cval_grid.values*1000),
+    #                    vmax=np.nanmax(cval_grid.values*1000))
+    #
     #     plt.colorbar()
     #     # plot data points.
     #     plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
@@ -152,18 +188,11 @@ da_grid = xr.concat(da_list, dim='Time_UTC')
 da_grid.name = cvar
 
 # Save to netcdf file
+# print('NOT Saving here, need to uncomment')
 da_grid.to_netcdf(nc_file_out)
 
-#
-# # Plot contour the gridded data and points
-# p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
-# plt.figure()
-# plt.pcolormesh(da_grid.gridlon_0, da_grid.gridlat_0, cval_grid.values*1000, cmap=p_colors,
-#                vmin=np.nanmin(da_grid.sum(dim.values*1000), vmax=np.nanmax(cval_grid.values*1000))
-# plt.colorbar()
-# # plot data points.
-# plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
-# plt.scatter(x,y,marker='o',c=cval.values*1000,s=6, cmap=p_colors)
+
+
 
 #
 # # grid the data.
@@ -181,7 +210,7 @@ da_grid.to_netcdf(nc_file_out)
 #
 #
 #
-plt.show()
+
 
 
 

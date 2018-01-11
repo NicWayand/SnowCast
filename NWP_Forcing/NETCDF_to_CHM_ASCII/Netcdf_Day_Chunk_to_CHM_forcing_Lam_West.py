@@ -87,8 +87,14 @@ for cd in all_files:
     os.chdir(netcdf_dir)
     ds = xr.open_dataset(cd,engine='netcdf4')
 
+    # Check if no HR (RH) variable is available
+    if 'HR' not in ds:
+        da_temp = ds.t.copy()
+        da_temp.name = 'HR'
+        ds['HR'] = da_temp.where(da_temp > 9999999) # Fill with missing (t always less than 999999)
+
     # Rename variables
-    Allow skip if variable is missing
+    # Allow skip if variable is missing
     ds.rename(var_dic, inplace=True)
 
     # Select only times we want
@@ -124,18 +130,18 @@ for cd in all_files:
     ds['rh'] = ds.rh*100 # fraction to %
 
     # Pressure (after RH calcs)
-    ds['press'] = ds['press'] / 100 # Pa to hPa
+    ds['press'] = ds['press'] # Appears to b in hPa already
 
-    # Precipitaiton (liquid and solid) accumulated (m) to incremental (mm)
-    ds_p = ds.PR.diff(dim='time')
-    # Setp values just below zero to zero
+    # Precipitation (liquid and solid) accumulated (m) to incremental (mm)
+    ds_p = ds.PR.diff(dim='time') * 1000
+    # Set values just below zero to zero
     ds_p.values[ds_p.values<0] = 0
     # First value is unknown (downside of saving as accum...) so we set it to -9999
     ds['p'] = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
 
-    # Geopotentila to height
+    # Geopotential to height
     if 'GZ' in ds: # Some files are missing GZ (fine as long as its not the first one!)
-        ds['HGT_surface'] = ds.GZ*9.81
+        ds['HGT_surface'] = ds.GZ * 9.81
 
     # Rename time
     ds.rename({'time':'datetime'},inplace=True)
