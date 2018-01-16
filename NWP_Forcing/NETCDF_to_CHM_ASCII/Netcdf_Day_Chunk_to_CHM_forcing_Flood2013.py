@@ -59,17 +59,7 @@ if coordsystem=='pro':
 os.chdir(netcdf_dir)
 
 # Get all file names
-all_files =  sorted(glob.glob('GEM_rockies_*_00_24*.nc'))
-rm_files = ['GEM_rockies_2013031906_00_24_surf.nc', 'GEM_rockies_2013031906_00_24_lvl.nc',
-                        'GEM_rockies_2013041506_25_42.nc','GEM_rockies_2013061318_25_42.nc',
-                        'GEM_rockies_2014021818_00_24.nc','GEM_rockies_2014102118_25_42.nc',
-                        'GEM_rockies_2014102118_00_24.nc']
-# all_files = set(glob.glob('GEM_rockies_*.nc'))# - set(glob.glob("*_lvl*")))
-# all_files = [all_files - x for x in rm_files]
-all_files = sorted(all_files)
-# GEM_rockies_2013031906_00_24_surf.nc
-#hgt_file = r'/media/data3/nicway/GEM/GDPS/GDPS_HGT/CMC_glb_HGT_SFC_0_latlon.24x.24_2017092700_P000_SUB.nc'
-#ds_hgt_in = xr.open_dataset(hgt_file).isel(time=0).drop('time')
+all_files =  sorted(glob.glob('GEM*rockies_*.nc'))
 
 first_day = True # Flag to write header to csv files if first month
 
@@ -78,8 +68,7 @@ if not os.path.isdir(ascii_dir):
     os.mkdir(ascii_dir)
 
 for cd in all_files:
-    if cd in rm_files: # we don't want this file
-        continue
+
     flag1 = False # flag to check we are not missing a forecast
     print cd
 
@@ -87,43 +76,19 @@ for cd in all_files:
     os.chdir(netcdf_dir)
     ds = xr.open_dataset(cd,engine='netcdf4')
 
-    # Check if no HR (RH) variable is available
-    if 'HR' not in ds:
-        da_temp = ds.t.copy()
-        da_temp.name = 'HR'
-        ds['HR'] = da_temp.where(da_temp > 9999999) # Fill with missing (t always less than 999999)
-
     # Rename variables
     # Allow skip if variable is missing
     ds.rename(var_dic, inplace=True)
-
-
-
-    # Apply a bias correction (optional)
-    #ds['Qli'] = ds.Qli + 30
-    #print "Warning, applying +30 ilwr bias correctoin"
 
     print 'Converting units to CHM units'
     ##### Convert units to CHM requirements
 
     # longitude
-    ds['lon_0'] =  ds.lon_0 - 360
-
-    # replace x,y (in distance (m)) to indices (wgrib does this for some reason!)
-    ds['x']=np.arange(0,ds.x.size)
-    ds['y']=np.arange(0,ds.y.size)
-
-    # Apply a bias correction (optional)
-    #ds['Qli'] = ds.Qli + 30
-    #print "Warning, applying +30 ilwr bias correction"
+    ds['lon_0'] =  ds.lon_0 - 360.0
 
     # Drop sigma dims
-    ds = ds.isel(sigma=0).drop('sigma')
-    # ds['t'] = ds.t.isel(sigma=0).drop('sigma')
-    # ds['rh'] = ds.rh.isel(sigma=0).drop('sigma')
-    # ds['GZ'] = ds.GZ.isel(sigma=0).drop('sigma')
-    # ds['u'] = ds.u.isel(sigma=0).drop('sigma')
-    # ds['vw_dir'] = ds.vw_dir.isel(sigma=0).drop('sigma')
+    ds = ds.isel(zaxis=0).drop('zaxis')
+    ds = ds.isel(height=0).drop('height')
 
     # Relative humidity
     ds['rh'] = ds.rh*100 # fraction to %
@@ -133,10 +98,6 @@ for cd in all_files:
 
     # Precipitation (liquid and solid) accumulated (m) to incremental (mm)
     ds['p'] = ds.PR.diff(dim='time', label='lower') * 1000
-    # # Set values just below zero to zero
-    # ds_p.values[ds_p.values<0] = 0
-    # # First value is unknown (downside of saving as accum...) so we set it to -9999
-    #  = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
 
     # Select only times we want
     ds = ds.isel(time=np.arange(6,18))
@@ -147,10 +108,6 @@ for cd in all_files:
 
     # Rename time
     ds.rename({'time':'datetime'},inplace=True)
-
-
-    ## Adjust to local time zone (i.e. from UTC to MST, local_time_offset should = -7)
-    #ds['datetime'] = pd.to_datetime(ds.datetime.values) + datetime.timedelta(hours=local_time_offset)
 
     # Shift time stamp from END (GEM format)
     # to START (CHM format)
@@ -170,9 +127,9 @@ for cd in all_files:
     meta = {}
 
     # Loop through each point within our lat long box
-    for i in range(ds.coords['x'].size):
-        for j in range(ds.coords['y'].size):
-            sub_grid = ds.isel(x=i, y=j)
+    for i in range(ds.coords['lon_0'].size):
+        for j in range(ds.coords['lat_0'].size):
+            sub_grid = ds.isel(lon_0=i, lat_0=j)
             if sub_grid.t.notnull().sum()==0:
                 continue
             df = sub_grid.to_dataframe()
