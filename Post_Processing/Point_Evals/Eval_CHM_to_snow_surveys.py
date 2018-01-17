@@ -197,7 +197,7 @@ def plot_var_at_snowCoarse(cvar, ds_MOD, ds_OBS):
 
     ax1.set_title(plot_key[cvar])
     ax1.set_ylabel(plot_key[cvar]+' ('+ylabel_unit[cvar]+')')
-
+    # ax1.set_ylim([0, 1.5])
     f.tight_layout()
     # Add Legends
     first_legend = plt.legend(handles=h_obs, loc='upper left')
@@ -254,7 +254,7 @@ def plot_var_at_snowCoarse(cvar, ds_MOD, ds_OBS):
 
     ax1.set_title(plot_key[cvar])
     ax1.set_ylabel(plot_key[cvar] + ' bias (' + ylabel_unit[cvar] + ')')
-
+    # ax1.set_ylim([-0.4, 0.81])
     f2.tight_layout()
     # Add Legend
     plt.legend([h_mod[0]], ['Bias (Model - Observed)'], loc='upper left')

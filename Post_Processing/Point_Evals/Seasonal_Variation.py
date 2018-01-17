@@ -120,8 +120,8 @@ for cvar in Vars_to_plot:
                 c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    c_mod.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
-                    c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+                    c_mod.cumsum(dim='time').plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
+                    c_obs.cumsum(dim='time').plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])
     # same x-axis limits
@@ -161,7 +161,7 @@ for cvar in Vars_to_plot:
                 # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    (c_mod-c_obs).plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
+                    (c_mod-c_obs).cumsum(dim='time').plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
                     # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])
