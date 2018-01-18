@@ -1,6 +1,7 @@
 import xarray as xr
 import os
 import imp
+import send_mail
 import sys
 import numpy as np
 import pandas as pd
@@ -157,8 +158,11 @@ srf_files = [x for x in all_files if not 'HGT_ISBL' in x and not 'TMP_ISBL' in x
 # Load surface variables
 print('Loading Surface variables')
 # ds = xr.open_mfdataset(srf_files,concat_dim='time',engine='pynio',lock=threading.Lock())
-ds = xr.open_mfdataset(srf_files,concat_dim='forecast_hour',engine='pynio',preprocess=lambda x: preprocess(x))
-ds = add_datetime_dataset(ds)
+try:
+    ds = xr.open_mfdataset(srf_files,concat_dim='forecast_hour',engine='pynio',preprocess=lambda x: preprocess(x))
+    ds = add_datetime_dataset(ds)
+except:
+    send_mail.send(str('GDPS GRIB to NETCDF: Cannot open GDPS surface grib2 files'))
 
 # Load upper atmosphere variables
 print('Loading upper air Temperature')
@@ -238,5 +242,8 @@ os.chdir(netcdf_dir)
 # Export to netcdf
 nc_file_out = 'GEM_GDPS_'+domain+'_'+str(ds.datetime[0].values)+'.nc'
 print('Writing netcdf file')
-ds.to_netcdf(nc_file_out,engine='netcdf4')
+try:
+    ds.to_netcdf(nc_file_out,engine='netcdf4')
+except:
+    send_mail.send(str('GDPS GRIB to NETCDF: Error writing to netcdf file.'))
 
