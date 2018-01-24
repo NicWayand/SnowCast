@@ -107,9 +107,6 @@ def calc_bias(ds_obs, ds_mod, cvar):
 
     if cvar == 'p': # Cummulative variables (p is incremental)
         x = (ds_mod[cvar] - ds_obs[cvar]).sum(dim='time')/ds_obs[cvar].sum(dim='time')*100
-        # Screen for crazy biases that are most likely obs errors TODO
-        x = x.where((x>=-100) & (x<=100))
-        print("Removing crazy precip biases")
         return x
     else:
         return ds_mod[cvar].mean(dim='time') - ds_obs[cvar].mean(dim='time')
@@ -121,6 +118,16 @@ def calc_rmse(ds_obs, ds_mod, cvar):
     # calculate root-mean-squared errors averaged over all stations
     return xr.ufuncs.sqrt(se.mean(dim=['time']))
 
+# Calculate R2
+def calc_r2(ds_obs, ds_mod, cvar):
+    # total sum of squares
+    SStot = ( (ds_obs[cvar] - ds_obs[cvar].mean(dim='time') )** 2.0).sum(dim='time')
+
+    # residual sum of squares:
+    SSres = ( (ds_obs[cvar] - ds_mod[cvar]) ** 2.0).sum(dim='time')
+
+    return (1 - SSres / SStot)
+
 # Plot a metric on a map
 def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ctype):
     fig = plt.figure(figsize=(20, 12))
@@ -128,7 +135,7 @@ def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ct
     ax1.imshow(np.flipud(dem.values), extent=[np.min(dem.x), np.max(dem.x),
                                               np.min(dem.y), np.max(dem.y)], aspect=ax1.get_aspect())
     # Add metric values at points
-    p1 = ax1.scatter(da_metric.Lon, da_metric.Lat, transform=ccrs.AlbersEqualArea(), s=100,
+    p1 = ax1.scatter(da_metric.Lon, da_metric.Lat, transform=ccrs.AlbersEqualArea(), s=200,
                 c=da_metric, zorder=100,
                 cmap=cmap_in)  # yc, xc -- lists or numpy arrays
     # Add a colorbar

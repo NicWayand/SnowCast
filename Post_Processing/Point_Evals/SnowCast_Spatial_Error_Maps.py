@@ -186,8 +186,39 @@ for cvar in ['t', 'rh', 'U_2m_above_srf', 'p', 'ilwr', 'iswr']:
     else:
         print("No data for ", cvar, " skipping plot")
 
-# plt.show()
+# Answer specific questions
 
+# What is GEM ISWR error at FRG?
+TS = '2014-11-01'
+TE = '2016-08-30' # Per paper period used
+cvar='iswr'
+csta=b'FRG'
+plt.figure()
+obs_dt_val[cvar].sel(station=csta).plot()
+mod_dt_val[cvar].sel(station=csta).plot()
+plt.figure()
+plt.scatter(obs_dt_val[cvar].sel(station=csta), mod_dt_val[cvar].sel(station=csta))
+
+print("What is GEM ISWR error at FRG?")
+hrly_obs = obs_dt_val.fillna(0).sel(time=slice(TS,TE))
+hrly_mod = mod_dt_val.fillna(0).sel(time=slice(TS,TE))
+da_rmse = chmF.calc_rmse(hrly_obs, hrly_mod, cvar)
+da_bias = chmF.calc_bias(hrly_obs, hrly_mod, cvar)
+ds_r2   = chmF.calc_r2(hrly_obs, hrly_mod, cvar)
+print("At Hourly time steps")
+print(csta, " had rmse of ", da_rmse.sel(station=csta).values)
+print(csta, " had bias of ", da_bias.sel(station=csta).values)
+print(csta, " had r2 of ", ds_r2.sel(station=csta).values)
+
+dly_obs = obs_dt_val.fillna(0).resample(freq='D', dim='time', how='mean', label='left', skipna=True).sel(time=slice(TS,TE))
+dly_mod = mod_dt_val.fillna(0).resample(freq='D', dim='time', how='mean', label='left', skipna=True).sel(time=slice(TS,TE))
+dly_da_rmse = chmF.calc_rmse(dly_obs, dly_mod, cvar)
+dly_da_bias = chmF.calc_bias(dly_obs, dly_mod, cvar)
+dly_ds_r2   = chmF.calc_r2(dly_obs, dly_mod, cvar)
+print("At Daily time steps")
+print(csta, " had rmse of ", dly_da_rmse.sel(station=csta).values)
+print(csta, " had bias of ", dly_da_bias.sel(station=csta).values)
+print(csta, " had r2 of ", dly_ds_r2.sel(station=csta).values)
 
 
 # In[11]:
