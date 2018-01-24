@@ -22,7 +22,7 @@ fig_res = 90 # dpi
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.error('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
@@ -78,6 +78,8 @@ dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample()
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
+TODO: merge in CRHO Survey data!! (need to take average and rename)
+
 # Function that makes two data sets common:
 # Variables
 # Time Step
@@ -123,7 +125,7 @@ def make_common_snow_coarse(ds_obs, ds_mod, dt_eval):
     #agg time
     com_time = np.intersect1d(ds_mod.time, ds_obs.time)
     if len(com_time)==0:
-        sys.error("no common time found")
+        raise ValueError("no common time found")
 
     print("Common time is:",com_time.size," from ",com_time[0], " to ", com_time[-1])
     print("")
@@ -197,7 +199,7 @@ def plot_var_at_snowCoarse(cvar, ds_MOD, ds_OBS):
 
     ax1.set_title(plot_key[cvar])
     ax1.set_ylabel(plot_key[cvar]+' ('+ylabel_unit[cvar]+')')
-
+    # ax1.set_ylim([0, 1.5])
     f.tight_layout()
     # Add Legends
     first_legend = plt.legend(handles=h_obs, loc='upper left')
@@ -254,7 +256,7 @@ def plot_var_at_snowCoarse(cvar, ds_MOD, ds_OBS):
 
     ax1.set_title(plot_key[cvar])
     ax1.set_ylabel(plot_key[cvar] + ' bias (' + ylabel_unit[cvar] + ')')
-
+    # ax1.set_ylim([-0.4, 0.81])
     f2.tight_layout()
     # Add Legend
     plt.legend([h_mod[0]], ['Bias (Model - Observed)'], loc='upper left')

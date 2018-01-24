@@ -33,7 +33,7 @@ def drop_possible_var(var_in, c_df):
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
+    raise ValueError('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
@@ -97,8 +97,7 @@ for cd in all_files:
     # Allow skip if variable is missing
     ds.rename(var_dic, inplace=True)
 
-    # Select only times we want
-    ds = ds.isel(time=np.arange(6,18))
+
 
     # Apply a bias correction (optional)
     #ds['Qli'] = ds.Qli + 30
@@ -133,11 +132,14 @@ for cd in all_files:
     ds['press'] = ds['press'] # Appears to b in hPa already
 
     # Precipitation (liquid and solid) accumulated (m) to incremental (mm)
-    ds_p = ds.PR.diff(dim='time') * 1000
-    # Set values just below zero to zero
-    ds_p.values[ds_p.values<0] = 0
-    # First value is unknown (downside of saving as accum...) so we set it to -9999
-    ds['p'] = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
+    ds['p'] = ds.PR.diff(dim='time', label='lower') * 1000
+    # # Set values just below zero to zero
+    # ds_p.values[ds_p.values<0] = 0
+    # # First value is unknown (downside of saving as accum...) so we set it to -9999
+    #  = xr.concat([ds.PR[0,:,:]*0-9999,ds_p],dim='time').transpose('time','y','x')
+
+    # Select only times we want
+    ds = ds.isel(time=np.arange(6,18))
 
     # Geopotential to height
     if 'GZ' in ds: # Some files are missing GZ (fine as long as its not the first one!)

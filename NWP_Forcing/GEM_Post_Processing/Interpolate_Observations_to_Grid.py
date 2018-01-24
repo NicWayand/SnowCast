@@ -14,6 +14,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import PP
 import idw
+import numpy.ma as ma
 
 # General plotting settings
 sns.set_style('whitegrid')
@@ -129,8 +130,10 @@ Ei = ds_gem.HGT_P0_L1_GST0
 # Initialize dataArray
 da_list = []
 
+test_plots = False
+
 # Loop through time
-for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19T01:00:00')):
+for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2014-11-28T00:00:00', '2014-11-29T01:00:00')):
     # Get current time
     cval = ds_pts.sel(Time_UTC=t)
     print(t.values)
@@ -155,31 +158,49 @@ for t in ds_pts.Time_UTC: #.sel(Time_UTC=slice('2015-11-17T01:00:00','2015-11-19
     da_list.append(cval_grid)
 
     # # Plot checks
-    # if cval.max()*1000>5:
-    #     # Check for trend with elevation
-    #     # plt.figure()
-    #     # plt.plot(cval.values, cval.Elevation.values, 'ko')
-    #
-    #     # Plot contour the gridded data and points
-    #     p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
-    #     plt.figure()
-    #     # p1 = (cval_grid*1000).plot(cmap=p_colors,
-    #     #                vmin=np.nanmin(cval_grid.values*1000),
-    #     #                vmax=np.nanmax(cval_grid.values*1000))
-    #     import numpy.ma as ma
-    #
-    #     Zm = ma.masked_invalid(cval_grid.values*1000)
-    #     plt.pcolormesh(cval_grid.gridlon_0, cval_grid.gridlat_0,
-    #                    Zm, cmap=p_colors,
-    #                    vmin=np.nanmin(cval_grid.values*1000),
-    #                    vmax=np.nanmax(cval_grid.values*1000))
-    #
-    #     plt.colorbar()
-    #     # plot data points.
-    #     plt.scatter(x,y,marker='o',c='k',s=10, cmap=p_colors)
-    #     plt.scatter(x,y,marker='o',c=cval.values*1000,s=6, cmap=p_colors)
-    #
-    #     plt.show()
+    if test_plots and cval.max()*1000>5:
+        # Check for trend with elevation
+        plt.figure()
+        plt.plot(cval.values*1000, cval.Elevation.values, 'ko')
+        plt.ylabel('Elevatoin (m)')
+        plt.xlabel('Precipitation\n(mm/hour)')
+        plt.tight_layout()
+
+        p_colors = matplotlib.colors.ListedColormap(sns.color_palette("Reds", 12))
+        p_elev = matplotlib.colors.ListedColormap(sns.color_palette("Greys", 12))
+
+        # Plot point obs on elevation map
+        fig, ax = plt.subplots()
+        Zm = ma.masked_invalid(Ei.values)
+        e=plt.pcolormesh(Ei.gridlon_0, Ei.gridlat_0,
+                       Zm, cmap=p_elev,
+                       vmin=np.nanmin(Ei.values),
+                       vmax=np.nanmax(Ei.values))
+        cbar = plt.colorbar(e)
+        cbar.ax.set_ylabel('Elevation (m)')
+        # plot data points.
+        # plt.scatter(x, y, marker='o', c='k', s=100, cmap=p_colors)
+        pts1 = plt.scatter(x, y, marker='o', c=cval.values*1000, s=90, cmap=p_colors,
+                    edgecolors='k', linewidths=2)
+        cbar2 = plt.colorbar(pts1)
+        cbar2.ax.set_ylabel('Precipitation (mm/hour)')
+
+        # Plot interpolated obs
+        plt.figure()
+        Zm = ma.masked_invalid(cval_grid.values * 1000)
+        plt.pcolormesh(cval_grid.gridlon_0, cval_grid.gridlat_0,
+                       Zm, cmap=p_colors,
+                       vmin=np.nanmin(cval_grid.values * 1000),
+                       vmax=np.nanmax(cval_grid.values * 1000))
+
+        cbar = plt.colorbar()
+        cbar.ax.set_ylabel('Precipitation (mm/hour)')
+        # plt.scatter(x, y, marker='o', c='k', s=100, cmap=p_colors)
+        plt.scatter(x, y, marker='o', c=cval.values * 1000, s=90, cmap=p_colors,
+                    edgecolors='k', linewidths=2)
+
+
+        plt.show()
 
 # Concat over time
 da_grid = xr.concat(da_list, dim='Time_UTC')
@@ -188,8 +209,8 @@ da_grid = xr.concat(da_list, dim='Time_UTC')
 da_grid.name = cvar
 
 # Save to netcdf file
-# print('NOT Saving here, need to uncomment')
-da_grid.to_netcdf(nc_file_out)
+print('NOT Saving here, need to uncomment')
+# da_grid.to_netcdf(nc_file_out)
 
 
 

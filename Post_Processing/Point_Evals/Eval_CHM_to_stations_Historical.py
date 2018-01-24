@@ -19,11 +19,19 @@ sns.set_style('whitegrid')
 sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 fig_res = 90 # dpi
 
+# Some plotting Options
+percent_nan_allowed = 80 # % to allow missing from aggregation period (varies)
+exclude_forest = 0  # 0 - non-forest only
+                    # 1 - forest only
+                    # 2 - all stations
+# Forested stations
+forest_staID = ['HMW', 'LLF', 'UPC', 'UPF']
+
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.exit('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
@@ -34,7 +42,7 @@ if chm_run_dir=='forecast_CRHO_spinup':
 elif chm_run_dir=='HRDPS_Current_BS':
     c_run_dt_in = 'H'
 elif chm_run_dir=='HRDPS_Historical':
-    c_run_dt_in = 'W'
+    c_run_dt_in = 'D'
 elif chm_run_dir=='HRDPS_Historical_Post_Processed':
     c_run_dt_in = 'W'
 elif chm_run_dir=='GDPS_Current':
@@ -95,18 +103,41 @@ OBS_data.rename(vars_all, inplace=True);
 # print('iswr fill is hack, need to fix upstream')
 
 # Snow surveys
-SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
-EC_data = xr.open_dataset(EC_snow_course_in)
+# SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
+# EC_data = xr.open_dataset(EC_snow_course_in)
 
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
+dt_eval_hr = {'H':1, '3H':3, 'D':24, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
-EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
+# EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
+
+
+# exclude_forest = 0  # 0 - non-forest only
+                    # 1 - forest only
+                    # 2 - all stations
+# Forested stations
+# forest_staID = ['LLF', 'UPF']
+
+# Get MODEL forested stations (could be different than reaility!!!)
+for_mod_sta = Mod_data.where(Mod_data.snow_load.max(dim='time')>0,drop=True).station.values
+# Check obs and model both think the same stations are forested!
+assert set(forest_staID) == set(for_mod_sta)
+
+# Optional exclude/include forested sites
+if exclude_forest == 0: # exclude forest
+    print("Dropping forested stations...")
+    OBS_data = OBS_data.sel(station = list(set(OBS_data.station.values) - set(forest_staID)))
+    Mod_data = Mod_data.sel(station = list(set(Mod_data.station.values) - set(forest_staID)))
+elif exclude_forest == 1: # forest only
+    print("Only using forested stations...")
+    OBS_data = OBS_data.sel(station = forest_staID)
+    Mod_data = Mod_data.sel(station = forest_staID)
+else:
+    raise ValueError('Not a valid option')
 
 # Get common obs and model
-percent_nan_allowed = 50
 print("Allowing ",percent_nan_allowed," percent missing in period averages.")
 (obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
         c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=percent_nan_allowed)

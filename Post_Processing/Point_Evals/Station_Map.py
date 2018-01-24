@@ -58,6 +58,11 @@ dem = xr.open_rasterio(dem_file).sel(band=1).drop('band')
 # Provences
 p_sh = list(shpreader.Reader(p_file).geometries())
 
+# Cities/Towns to plot
+t_lat = [51.089682, 51.177924, 51.426574, 51.268964, 51.394761]
+t_lon = [-115.360909, -115.570507, -116.18042, -115.919495, -116.49353]
+t_name = ['Canmore','Banff','Lake Louise','Castle Junction','Field']
+
 dem_file_big = r'F:\Work\e\Data\DEMs\NA.tif'
 dem_big = xr.open_rasterio(dem_file_big).sel(band=1).drop('band')
 

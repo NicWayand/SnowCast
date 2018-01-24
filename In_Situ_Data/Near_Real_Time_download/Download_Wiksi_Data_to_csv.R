@@ -37,7 +37,7 @@ for(i in 1:length(stations))
      }
     # Some times this *&^%*&%^(&  fails and not handeled right. So write a stupied R try catch
     
-    ts0<-getWISKIvalues(id,timezone='MST',startDate = "2016-10-01") # when no end date specified, retrives to end
+    ts0<-getWISKIvalues(id,timezone='MST',startDate = "2016-04-01") # when no end date specified, retrives to end
     
     sane_var_name <- stringr::str_replace_all(cvar,' ','_')
     sane_file_name <- paste0( stringr::str_replace_all(stations[i],' ','_'),'__',sane_var_name ,'.csv')

@@ -20,7 +20,7 @@ folderout=$base_dir'/netcdf' #folder to store netcdf
 # Yakima
 #subROI='-121.48187300000001:-120.336557 46.44775:47.01475'
 # CRHO - SnowCast
-subROI='-116.645:-114.769166666667-114.769166666667 50.66:51.7933333333333'
+subROI='-116.645:-114.769166666667 50.66:51.7933333333333'
 
 # Keep list of error files
 errFile=$base_dir'/grib2_error_files.txt'

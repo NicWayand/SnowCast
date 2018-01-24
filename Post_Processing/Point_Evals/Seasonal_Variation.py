@@ -77,7 +77,7 @@ OBS_data.rename(vars_all, inplace=True);
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
+dt_eval_hr = {'H':1, '3H':3, 'D':24, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 
 
@@ -120,8 +120,8 @@ for cvar in Vars_to_plot:
                 c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    c_mod.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
-                    c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+                    c_mod.cumsum(dim='time').plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
+                    c_obs.cumsum(dim='time').plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])
     # same x-axis limits
@@ -161,7 +161,7 @@ for cvar in Vars_to_plot:
                 # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    (c_mod-c_obs).plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
+                    (c_mod-c_obs).cumsum(dim='time').plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
                     # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])

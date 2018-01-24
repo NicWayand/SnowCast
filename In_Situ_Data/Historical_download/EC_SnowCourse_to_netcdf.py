@@ -10,7 +10,7 @@ import glob
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('Requires one argument [configuration file]')
+    raise ValueError('Requires one argument [configuration file]')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
