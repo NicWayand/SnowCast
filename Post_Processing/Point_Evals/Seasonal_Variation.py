@@ -77,7 +77,7 @@ OBS_data.rename(vars_all, inplace=True);
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
+dt_eval_hr = {'H':1, '3H':3, 'D':24, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 
 
