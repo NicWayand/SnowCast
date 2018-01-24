@@ -78,6 +78,8 @@ dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample()
 
 EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
 
+TODO: merge in CRHO Survey data!! (need to take average and rename)
+
 # Function that makes two data sets common:
 # Variables
 # Time Step

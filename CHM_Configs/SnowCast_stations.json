@@ -306,8 +306,8 @@
     "CNT": {
         "elevation": 2470.0,
         "file": "CNT_out.txt",
-        "latitude": 50.95714,
-        "longitude": -115.19304,
+        "latitude": 50.944719,
+        "longitude": -115.193666,
         "modLandCover": 1,
         "type": "timeseries"
     },
@@ -404,7 +404,7 @@
         "file": "HMW_out.txt",
         "latitude": 50.944109999999995,
         "longitude": -115.13893999999999,
-        "modLandCover": 0,
+        "modLandCover": 1,
         "type": "timeseries"
     },
     "LLF": {
@@ -468,7 +468,7 @@
         "file": "UPC_out.txt",
         "latitude": 50.956540000000004,
         "longitude": -115.17535,
-        "modLandCover": 0,
+        "modLandCover": 1,
         "type": "timeseries"
     },
     "UPF": {
