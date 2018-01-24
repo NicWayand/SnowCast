@@ -87,7 +87,7 @@ def load_GEM_4d_var(PresLevs,UA_files,var_name,var_name_new,preprocess):
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('GRIB2_to_NETCDF.py requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
+    raise ValueError('GRIB2_to_NETCDF.py requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
 
 
 # Get name of configuration file/module

@@ -30,7 +30,7 @@ fig_res = 90 # dpi
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.error('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]

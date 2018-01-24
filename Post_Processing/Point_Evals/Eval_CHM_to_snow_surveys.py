@@ -22,7 +22,7 @@ fig_res = 90 # dpi
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.error('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
@@ -125,7 +125,7 @@ def make_common_snow_coarse(ds_obs, ds_mod, dt_eval):
     #agg time
     com_time = np.intersect1d(ds_mod.time, ds_obs.time)
     if len(com_time)==0:
-        sys.error("no common time found")
+        raise ValueError("no common time found")
 
     print("Common time is:",com_time.size," from ",com_time[0], " to ", com_time[-1])
     print("")

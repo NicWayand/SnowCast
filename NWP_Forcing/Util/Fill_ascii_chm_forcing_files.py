@@ -18,7 +18,7 @@ time.tzset()
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
+    raise ValueError('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]

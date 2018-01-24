@@ -118,7 +118,7 @@ dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample()
                     # 1 - forest only
                     # 2 - all stations
 # Forested stations
-forest_staID = ['LLF', 'UPC', 'UPF']
+# forest_staID = ['LLF', 'UPC', 'UPF']
 
 # Get MODEL forested stations (could be different than reaility!!!)
 for_mod_sta = Mod_data.where(Mod_data.snow_load.max(dim='time')>0,drop=True).station.values
@@ -126,8 +126,10 @@ for_mod_sta = Mod_data.where(Mod_data.snow_load.max(dim='time')>0,drop=True).sta
 assert set(forest_staID) == set(for_mod_sta)
 
 # Optional exclude/include forested sites
-# if exclude_forest==0: # exclude forest
+if exclude_forest==0: # exclude forest
 
+else:
+    thr
 
 # Get common obs and model
 print("Allowing ",percent_nan_allowed," percent missing in period averages.")
