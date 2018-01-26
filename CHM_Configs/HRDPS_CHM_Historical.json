@@ -29,7 +29,7 @@
   [
     //met interp
     "solar",
-    "Gem_pass_through",
+    //"Gem_pass_through",
      "Liston_wind",
 //    "Marsh_shading_iswr",
     "iswr_from_obs",

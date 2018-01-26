@@ -1,5 +1,5 @@
 #!/bin/bash
-OMP_NUM_THREADS=24
+OMP_NUM_THREADS=12
 # Stop of get any simple error
 set -e
 
