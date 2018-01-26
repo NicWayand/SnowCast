@@ -10,7 +10,9 @@ def save_figure(f,file_out,fig_res):
     f.savefig(file_out,bbox_inches='tight',dpi=fig_res)
 
 # Function that makes two data sets common:
-def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percent_nan_allowed=20):
+def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr,
+                remove_missing=True, percent_nan_allowed=20,
+                exclude_forest=2, forest_staID=None):
     # In case data sets came from python 2.7 and 3.5, remove bytes
     # TODO: instead of decoding, throw error if ds_obs and ds_mod were not created in the same python
     # environent (i.e. 2.7 and 2.7).
@@ -30,21 +32,35 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
     # We use a threshold (percent_nan_allowed) for % missing within a period,
     skipna = True # Skips nans when doing aggregation, then we remove those periods with less than percent_nan_allowed
 
-    # Common variables
-    obs_vars = ds_obs.data_vars
-    mod_vars = ds_mod.data_vars
-    # Find common variables
-    com_vars = np.sort(list(set(obs_vars).intersection(mod_vars)))
-    # Extract only common vars
-    ds_obs = ds_obs[com_vars]
-    ds_mod = ds_mod[com_vars]
-    print("Common variables are:", com_vars)
-    print("")
+    # (Optional) drop stations based on vegetation setting
+    # Get MODEL forested stations (could be different than reality!!!)
+    if 'snow_load' in ds_mod:
+        for_mod_sta = ds_mod.where(ds_mod.snow_load.max(dim='time') > 0, drop=True).station.values
+    else:
+        raise ValueError("No forested stations in model run.")
+
+    # Check obs and model both think the same stations are forested!
+    assert set(forest_staID) == set(for_mod_sta)
+
+    # Optional exclude/include forested sites
+    if exclude_forest == 0:  # exclude forest
+        print("Dropping forested stations...")
+        ds_obs = ds_obs.sel(station=list(set(ds_obs.station.values) - set(forest_staID)))
+        ds_mod = ds_mod.sel(station=list(set(ds_mod.station.values) - set(forest_staID)))
+    elif exclude_forest == 1:  # forest only
+        print("Only using forested stations...")
+        ds_obs = ds_obs.sel(station=forest_staID)
+        ds_mod = ds_mod.sel(station=forest_staID)
+    elif exclude_forest == 2:  # Use all stations (do nothing)
+        print("Using forested and non-forested stations...")
+    else:
+        raise ValueError('Not a valid option')
 
     # Common stations
     obs_sta = ds_obs['station'].values
     mod_sta = ds_mod['station'].values
-    # Find common variables
+
+    # Find common stations
     com_sta = np.sort(list(set(obs_sta).intersection(mod_sta)))
     print("Common stations are:", com_sta)
     print("")
@@ -56,6 +72,17 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr, remove_missing=True, percen
     # Extract only common stations
     ds_obs = ds_obs.sel(station=com_sta)
     ds_mod = ds_mod.sel(station=com_sta)
+
+    # Common variables
+    obs_vars = ds_obs.data_vars
+    mod_vars = ds_mod.data_vars
+    # Find common variables
+    com_vars = np.sort(list(set(obs_vars).intersection(mod_vars)))
+    # Extract only common vars
+    ds_obs = ds_obs[com_vars]
+    ds_mod = ds_mod[com_vars]
+    print("Common variables are:", com_vars)
+    print("")
 
     # Pre-trim time to common time start and end (speeds up time step aggregation)
     T_start = np.max([ds_mod.time.values[0], ds_obs.time.values[0]])
@@ -107,10 +134,6 @@ def calc_bias(ds_obs, ds_mod, cvar):
 
     if cvar == 'p': # Cummulative variables (p is incremental)
         x = (ds_mod[cvar] - ds_obs[cvar]).sum(dim='time')/ds_obs[cvar].sum(dim='time')*100
-        # Screen for crazy biases that are most likely obs errors TODO
-        x = x.where((x>=-100) & (x<=100))
-        print("Removing crazy precip biases")
-        return x
     else:
         return ds_mod[cvar].mean(dim='time') - ds_obs[cvar].mean(dim='time')
 
@@ -120,6 +143,16 @@ def calc_rmse(ds_obs, ds_mod, cvar):
     se = (ds_mod[cvar] - ds_obs[cvar])**2.0
     # calculate root-mean-squared errors averaged over all stations
     return xr.ufuncs.sqrt(se.mean(dim=['time']))
+
+# Calculate R2
+def calc_r2(ds_obs, ds_mod, cvar):
+    # total sum of squares
+    SStot = ( (ds_obs[cvar] - ds_obs[cvar].mean(dim='time') )** 2.0).sum(dim='time')
+
+    # residual sum of squares:
+    SSres = ( (ds_obs[cvar] - ds_mod[cvar]) ** 2.0).sum(dim='time')
+
+    return (1 - SSres / SStot)
 
 # Plot a metric on a map
 def plot_point_metric(dem, da_metric, variable_name, variable_units, cmap_in, ctype):

@@ -107,13 +107,12 @@
  
   "output":
   {
-    "multi_points":true,
-    "output_dir":"HRDPS_Historical",
+    "output_dir":"HRDPS_Historical_Post_Processed",
     "file":"SnowCast_stations.json",
     "mesh":
      {
        "base_name":"SC",
-       "variables":["GEM_swe","GEM_snowdepthavg","swe","snowdepthavg","snowcoverfraction"],
+       "variables":["swe","snowdepthavg","snowcoverfraction"],
        "frequency":24
      }
   },
@@ -123,6 +122,6 @@
   },
   "forcing":
   {
-   "file":"/media/data3/nicway/GEM/archive/SOAP/ascii_HRDPS_SnowCast_full/SOAP_forcing.json"
+   "file":"/media/data3/nicway/GEM/archive/SOAP/Bias_p/SOAP_forcing.json"
   }
 }

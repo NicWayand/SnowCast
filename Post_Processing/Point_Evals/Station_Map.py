@@ -58,6 +58,11 @@ dem = xr.open_rasterio(dem_file).sel(band=1).drop('band')
 # Provences
 p_sh = list(shpreader.Reader(p_file).geometries())
 
+# Cities/Towns to plot
+t_lat = [51.089682, 51.177924, 51.426574, 51.268964, 51.394761]
+t_lon = [-115.360909, -115.570507, -116.18042, -115.919495, -116.49353]
+t_name = ['Canmore','Banff','Lake Louise','Castle Junction','Field']
+
 dem_file_big = r'F:\Work\e\Data\DEMs\NA.tif'
 dem_big = xr.open_rasterio(dem_file_big).sel(band=1).drop('band')
 
@@ -89,7 +94,10 @@ legend_network = {b'bcRiverForecastCenter':'BC River Forecast Center',
 # sns.set_style('whitegrid')
 # sns.set_context("talk", font_scale=2, rc={"lines.linewidth": 2})
 
-
+# Cities/Towns to plot
+t_lat = [51.089682, 51.177924, 51.426574, 51.268964, 51.394761]
+t_lon = [-115.360909, -115.570507, -116.18042, -115.919495, -116.49353]
+t_name = ['Canmore','Banff','Lake Louise','Castle Junction','Field']
 
 
 
@@ -156,6 +164,10 @@ ax1.scatter(lon_pts, lat_pts, transform=ccrs.PlateCarree(), marker='o', s=100,
             c='m', zorder=200, label='Alberta Environment Snow Course') #yc, xc -- lists or numpy arrays
 ax1.add_geometries(p_sh, ccrs.PlateCarree(),
                   edgecolor='black', facecolor='none', alpha=0.5)
+# Town/Cites
+ax1.scatter(t_lon, t_lat, c='k', s=300, marker='*')
+for i, txt in enumerate(t_name):
+    ax1.annotate(txt, (t_lon[i]+0.01, t_lat[i]+0.01), fontsize=20)
 leg = plt.legend(fancybox=True, loc='lower left', frameon=True, fontsize='xx-large', bbox_to_anchor=(-0.009, -0.009))
 leg.get_frame().set_facecolor('#ffffff')
 leg.get_frame().set_alpha(0.75)

@@ -3,7 +3,7 @@
 ################################################
 
 # Dir where output netcdf files go
-netcdf_dir  = '/media/data3/vvionnet/Data_GEM_June2013/2p5'
+netcdf_dir  = '/media/data3/vvionnet/Data_GEM_June2013/Old_Simu/2p5'
 
 # Dir where output ascii files should go
 ascii_dir    = '/media/data3/nicway/GEM/Flood2013/2p5'

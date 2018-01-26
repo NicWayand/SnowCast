@@ -33,7 +33,7 @@ def drop_possible_var(var_in, c_df):
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
+    raise ValueError('requires one argument [configuration file] (i.e. python GRIB2_to_CHM_forcing.py forcing_config.py')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
@@ -109,9 +109,21 @@ for cd in all_files:
     # Rename time
     ds.rename({'time':'datetime'},inplace=True)
 
+    # GEM in instantaneous so take average of t and t+1 to get value for t (avg of following hour)
+    ds_p1 = ds.copy()
+    ds_p1['datetime'] = pd.to_datetime(ds_p1.datetime.values) - datetime.timedelta(hours=1)
+    ds_avg = (ds+ds_p1)/2
+
+    # import matplotlib.pyplot as plt
+    #
+    # ds.t[:, 0, 0].plot(color='r')
+    # ds_p1.t[:, 0, 0].plot(color='b')
+    # ds_avg.t[:, 0, 0].plot(color='k')
+    # plt.show()
+
     # Shift time stamp from END (GEM format)
     # to START (CHM format)
-    ds['datetime'] = pd.to_datetime(ds.datetime.values) - datetime.timedelta(hours=output_dt)
+    # ds['datetime'] = pd.to_datetime(ds.datetime.values) - datetime.timedelta(hours=output_dt)
 
     # Move to ascii dir
     os.chdir(ascii_dir)

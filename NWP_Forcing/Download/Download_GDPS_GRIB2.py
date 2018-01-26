@@ -6,12 +6,14 @@ import sys
 import imp
 import time
 import send_mail
+import urllib2
+import socket
 
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file 
 if len(sys.argv) == 1:
-    sys.error('Download_RDPS_GRIB2.py requires one argument [configuration file] (i.e. python Download_HRDPS_GRIB2.py download_config.py')
+    raise ValueError('Download_RDPS_GRIB2.py requires one argument [configuration file] (i.e. python Download_HRDPS_GRIB2.py download_config.py')
 
 # Get name of configuration file/module
 configfile = sys.argv[-1]
@@ -64,7 +66,6 @@ for c_Forc_H in Forc_H:
 
     # Get current path
     cpath = base_url + sep + domain + sep + filetype + sep + lat_lon + sep + Init_H + sep + FH_s + sep
-    #print(cpath)
 
     # For each variable
     for cVar in np.arange(0,len(Variable)):
@@ -76,18 +77,10 @@ for c_Forc_H in Forc_H:
         print(cpath+cfile)
         print(" ")
 
-        import urllib2
-        import socket
-
-        # class MyException(Exception):
-        #     pass
-
-        tries_left = 5
+        tries_left = 5 # Number of times to download the file
         while tries_left > 0:
             try:
                 request = urllib2.urlopen(cpath + cfile, timeout=30)
-                # urllib.urlretrieve(cpath + cfile, os.path.join(download_dir, cfile))
-                #time.sleep(0.1)
             except:
                 print('Error opening url file ' + cfile + '. Remaining tries=' + str(tries_left))
                 tries_left = tries_left - 1
@@ -106,26 +99,4 @@ for c_Forc_H in Forc_H:
                     else:
                         break
 
-        # tries_left = 3
-        # while tries_left>0:
-        #     try:
-        #         urllib.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
-        #         time.sleep(0.1)
-        #     except:
-        #         print('Error downloading file '+cpath+cfile+ '. Remaining tries='+str(tries_left))
-        #         tries_left = tries_left - 1
-        #         # If we have already tried 3 times, then call for help
-        #         if tries_left==0:
-        #             send_mail.send(str('GDPS download failed. '+cpath+cfile))
-        #         continue
-        #     else:
-        #         break
 
-
-        #urls.append(cpath+cfile)
-
-# download files
-#from multiprocessing.dummy import Pool # use threads for I/O bound tasks
-#result = Pool(4).map(urllib.urlretrieve, urls)
-#urllib.request.urlretrieve(cpath+cfile, os.path.join(download_dir, cfile))
-#filename = wget.download(cpath+cfile)

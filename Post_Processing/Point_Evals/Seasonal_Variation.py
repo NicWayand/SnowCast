@@ -19,24 +19,31 @@ sns.set_style('ticks')
 sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 fig_res = 90 # dpi
 
+# Some plotting Options
+percent_nan_allowed = 50 # % to allow missing from aggregation period (varies)
+exclude_forest = 0  # 0 - non-forest only
+                    # 1 - forest only
+                    # 2 - all stations
+# Forested stations
+forest_staID = ['HMW', 'LLF', 'UPC', 'UPF']
+c_run_dt_in = 'MS' # MS (month start), H (hour), W (week)
+
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.exit('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
 chm_run_dir = str(sys.argv[2])
-
-c_run_dt_in = 'MS' # MS (month start), H (hour), W (week)
 
 # Load in configuration file as module
 X = imp.load_source('',configfile)
 
 # Assign to local variables
 data_dir = X.data_dir
-git_dir   = X.git_dir
+git_dir = X.git_dir
 
 main_dir  = os.path.join(git_dir, 'CHM_Configs', chm_run_dir)
 fig_dir   = os.path.join(main_dir , 'figures', 'Point_Evals')
@@ -77,13 +84,16 @@ OBS_data.rename(vars_all, inplace=True);
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 print(c_mod_file)
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
+dt_eval_hr = {'H':1, '3H':3, 'D':24, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 
 
 # Get common obs and model
 (obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
-                           c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=20)
+                           c_run_dt_in, dt_eval_hr,
+                           remove_missing=True, percent_nan_allowed=20,
+                           exclude_forest = exclude_forest,
+                           forest_staID = forest_staID)
 
 # Memory Clean up
 OBS_data = None
@@ -120,8 +130,8 @@ for cvar in Vars_to_plot:
                 c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    c_mod.plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
-                    c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
+                    c_mod.cumsum(dim='time').plot.line(color='r',ax=ax1[v_c],linestyle='--',linewidth=mod_linewidth)
+                    c_obs.cumsum(dim='time').plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])
     # same x-axis limits
@@ -161,7 +171,7 @@ for cvar in Vars_to_plot:
                 # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
             else:
                 if c_obs.sum()!=0:
-                    (c_mod-c_obs).plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
+                    (c_mod-c_obs).cumsum(dim='time').plot.line(color='k',ax=ax1[v_c],linestyle='-',linewidth=mod_linewidth)
                     # c_obs.plot.line(color='b',linewidth=obs_linewidth,ax=ax1[v_c])
         ax1[v_c].set_title(plot_key[cvar])
         ax1[v_c].set_ylabel(ylabel_unit[cvar])

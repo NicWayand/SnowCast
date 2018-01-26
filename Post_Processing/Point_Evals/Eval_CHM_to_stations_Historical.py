@@ -19,11 +19,19 @@ sns.set_style('whitegrid')
 sns.set_context("talk", font_scale=1.5, rc={"lines.linewidth": 2.5})
 fig_res = 90 # dpi
 
+# Some plotting Options
+percent_nan_allowed = 80 # % to allow missing from aggregation period (varies)
+exclude_forest = 0  # 0 - non-forest only
+                    # 1 - forest only
+                    # 2 - all stations
+# Forested stations
+forest_staID = ['HMW', 'LLF', 'UPC', 'UPF']
+
 # Load in config file
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) != 3:
-    sys.exit('Requires two arguments [configuration file] [chm_run_dir]')
+    raise ValueError('Requires two arguments [configuration file] [chm_run_dir]')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
@@ -34,7 +42,7 @@ if chm_run_dir=='forecast_CRHO_spinup':
 elif chm_run_dir=='HRDPS_Current_BS':
     c_run_dt_in = 'H'
 elif chm_run_dir=='HRDPS_Historical':
-    c_run_dt_in = 'W'
+    c_run_dt_in = 'D'
 elif chm_run_dir=='HRDPS_Historical_Post_Processed':
     c_run_dt_in = 'W'
 elif chm_run_dir=='GDPS_Current':
@@ -58,8 +66,6 @@ if not os.path.isdir(os.path.join(main_dir, 'figures')):
 if not os.path.isdir(fig_dir):
     os.mkdir(fig_dir)
 
-
-
 # Make dictionary of obs:model variable names to compare
 # model:obs
 vars_all = {'AirtemperatureA':'t','AirMoistureContentA':'rh','IncrementalPrecipitationA':'p',
@@ -74,11 +80,7 @@ plot_key = {'ilwr_out':'Outgoing Longwave','T_s_0':'Surface temperature','t':'Ai
 
 ylabel_unit = {'ilwr_out':'W m-2','G':'W m-2','T_s_0':'C','t':'C','rh':'%','p':'m','ilwr':'W m-2','iswr':'W m-2',
             'U_2m_above_srf':'m/s','vw_dir':'degrees true north','swe':'m','snowdepthavg':'m'}
-#
-# # Set font size
-# font = {'weight' : 'bold',
-#         'size'   : 24}
-# matplotlib.rc('font', **font)
+
 
 # Data files in
 file_in = os.path.join(data_dir, 'QC', 'Hourly_QC.nc') # CRHO and other data
@@ -94,22 +96,17 @@ OBS_data.rename(vars_all, inplace=True);
 # OBS_data['iswr'] = OBS_data['iswr'].fillna(0)
 # print('iswr fill is hack, need to fix upstream')
 
-# Snow surveys
-SS_data = xr.open_dataset(snow_survey_in,engine='netcdf4')
-EC_data = xr.open_dataset(EC_snow_course_in)
-
 # For current exp/folder, get netcdf file
 c_mod_file = os.path.join(main_dir,'points','CHM_pts.nc')
 Mod_data = xr.open_dataset(c_mod_file,engine='netcdf4')
-dt_eval_hr = {'H':1, '3H':3, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
-
-EC_data.rename({'staID':'station', 'Time_UTC':'time', 'SnowDepth_point':'snowdepthavg', 'SWE_point':'swe'}, inplace=True);
+dt_eval_hr = {'H':1, '3H':3, 'D':24, 'MS':999999, 'W':999999} # This converts resample() strs to int hours. Use 999 if N/A.
 
 # Get common obs and model
-percent_nan_allowed = 50
 print("Allowing ",percent_nan_allowed," percent missing in period averages.")
 (obs_dt_val, mod_dt_val) = chmF.make_common(OBS_data, Mod_data,
-        c_run_dt_in, dt_eval_hr, remove_missing=True, percent_nan_allowed=percent_nan_allowed)
+        c_run_dt_in, dt_eval_hr, remove_missing=True,
+        percent_nan_allowed=percent_nan_allowed,
+        exclude_forest=exclude_forest, forest_staID=forest_staID)
 
 # Memory Clean up
 OBS_data = None
@@ -176,10 +173,11 @@ f.tight_layout()
 # Add Legends
 first_legend = plt.legend(handles=h_obs, loc='upper left')
 ax = ax1.add_artist(first_legend)
-plt.legend([h_obs[0],h_mod[0]], ['Observed', 'Modeled'], loc='upper center')
-leg = ax1.get_legend()
-leg.legendHandles[0].set_color('black')
-leg.legendHandles[1].set_color('black')
+if (len(h_obs)!=0)  & (len(h_mod)!=0):
+    plt.legend([h_obs[0],h_mod[0]], ['Observed', 'Modeled'], loc='upper center')
+    leg = ax1.get_legend()
+    leg.legendHandles[0].set_color('black')
+    leg.legendHandles[1].set_color('black')
 
 # Save Figure
 file_out = os.path.join(fig_dir, 'Point_' + Vars_to_plot[0] + '.png')

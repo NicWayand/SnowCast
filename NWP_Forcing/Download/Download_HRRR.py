@@ -14,7 +14,7 @@ import hrrr_variable_from_pando as hrrr
 #######  load user configurable paramters here    #######
 # Check user defined configuraiton file
 if len(sys.argv) == 1:
-    sys.error('Download_HRDPS_GRIB2.py requires one argument [configuration file] (i.e. python Download_HRDPS_GRIB2.py download_config.py')
+    raise ValueError('Download_HRDPS_GRIB2.py requires one argument [configuration file] (i.e. python Download_HRDPS_GRIB2.py download_config.py')
 
 # Get name of configuration file/module
 configfile = sys.argv[1]
