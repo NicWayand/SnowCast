@@ -40,7 +40,7 @@ def make_common(ds_obs, ds_mod, dt_eval, dt_eval_hr,
         raise ValueError("No forested stations in model run.")
 
     # Check obs and model both think the same stations are forested!
-    assert set(forest_staID) == set(for_mod_sta)
+    #assert set(forest_staID) == set(for_mod_sta)
 
     # Optional exclude/include forested sites
     if exclude_forest == 0:  # exclude forest
