@@ -103,7 +103,8 @@ for cd in all_files:
 
     # Precipitation (liquid and solid) accumulated (m) to incremental (mm)
     ds['p'] = ds.PR.diff(dim='time', label='lower') * 1000
-
+    
+    #Compute zonal and meridonial component of wind vector
     ds['uu'] = ds.u *(np.sin(ds.vw_dir * np.pi/180))
     ds['vv'] = ds.u *(np.cos(ds.vw_dir * np.pi/180))
 
@@ -116,25 +117,22 @@ for cd in all_files:
     # Rename time
     ds.rename({'time':'datetime'},inplace=True)
 
+    #Update original instantaneous values with time averaged values
     ds_p1 = ds.copy()
     ds_p1['datetime'] = pd.to_datetime(ds_p1.datetime.values) - datetime.timedelta(hours=1)
     ds_avg = (ds+ds_p1)/2 
-  
-#    ds_avg['vw_dir'] = np.arctan2(ds_avg.uu, ds_avg.vv) * 180/np.pi
-#    ds_avg['vw_dir'] = (360 + ds_avg['vw_dir']) % 360   
-#    ds_avg['u'] = np.sqrt(ds_avg.vv**2.+ds_avg.uu**2.)  
-    
+    pdb.set_trace()
     for var in list_var_ave:
         ds[var] = ds_avg[var]
 
+    # Compute average wind speed and direction from meridonial and zonal wind
     ds['vw_dir'] = np.arctan2(ds.uu, ds.vv) * 180/np.pi
     ds['vw_dir'] = (360 + ds['vw_dir']) % 360   
-    ds['u'] = np.sqrt(ds.vv**2.+ds.uu**2.)  
+    ds['u'] = np.sqrt(ds.vv**2.+ds.uu**2.) 
 
-    # Shift time stamp from END (GEM format)
-    # to START (CHM format)
-    #ds['datetime'] = pd.to_datetime(ds.datetime.values) - datetime.timedelta(hours=output_dt)
-
+    #Drop variables not necessary for CHM
+    ds=ds.drop(['uu','vv','TD','FSF','PR','RN','ME','GZ','HU'])
+ 
     # Select only times we want
     ds = ds.isel(datetime=np.arange(6,18))
     
